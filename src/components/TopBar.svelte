@@ -62,7 +62,7 @@
   <span class="flex text-cyan"><Icon name="inbox" /></span>
 {/snippet}
 
-<div class="card flex items-center gap-3 py-2.5">
+<div class="card flex items-center gap-3 p-3">
   <div class="w-72"><Select label="Inbox" bind:value={() => currentInboxId, (v) => onselect(v)} {options} icon={inboxIcon} /></div>
   <button type="button" class="btn" disabled={!current} onclick={() => (editing = { error: "" })}><Icon name="pencil" />Edit</button>
 
