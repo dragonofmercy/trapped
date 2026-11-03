@@ -67,8 +67,9 @@
 
 <dialog bind:this={dialog} oncancel={(e) => (e.preventDefault(), onclose())}>
   <div class="flex h-[440px]">
-    <nav class="flex w-44 flex-col gap-1 border-r border-line p-3">
-      <h2 class="px-2 pt-1">Options</h2>
+    <!-- Both columns: same top padding and a 34px title row, so the two titles line up -->
+    <nav class="flex w-44 flex-col gap-1 border-r border-line px-3 pt-[18px] pb-3">
+      <h2 class="m-0 flex h-[34px] items-center px-2">Options</h2>
       <button type="button" class="nav" class:on={section === "general"} onclick={() => (section = "general")}><Icon name="sliders" />General</button>
       <button type="button" class="nav" class:on={section === "inboxes"} onclick={() => (section = "inboxes")}><Icon name="inbox" />Inboxes</button>
     </nav>
@@ -76,7 +77,7 @@
     <section class="flex min-w-0 flex-1 flex-col p-[18px]">
       <!-- Page title row, shared by every page, ends with the close cross -->
       <div class="page flex items-center gap-2">
-        <h3 class="m-0 mr-auto">{section === "general" ? "General" : "Inboxes"}</h3>
+        <h2 class="m-0 mr-auto">{section === "general" ? "General" : "Inboxes"}</h2>
         {#if section === "inboxes"}
           <button type="button" class="btn" onclick={() => (naming = { inbox: null, error: "" })}><Icon name="plus" />New</button>
         {/if}
@@ -133,15 +134,8 @@
 <style>
   /* Page title on top, then one option per row (Wallo's options layout) */
   .page {
-    margin: 0;
-    padding-bottom: 12px;
-    border-bottom: 1px solid var(--line);
-    font-size: 15px;
-    font-weight: 600;
-  }
-  .page h3 {
-    font-size: inherit;
-    font-weight: inherit;
+    height: 34px;
+    margin-bottom: 4px;
   }
   .close {
     width: 34px;
