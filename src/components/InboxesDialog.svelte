@@ -55,34 +55,25 @@
 </script>
 
 <dialog bind:this={dialog} oncancel={(e) => (e.preventDefault(), onclose())}>
-  <div class="flex h-[440px]">
-    <!-- Both columns: same top padding and a 34px title row, so the two titles line up -->
-    <nav class="flex w-44 flex-col gap-1 border-r border-line px-3 pt-[18px] pb-3">
-      <h2 class="m-0 flex h-[34px] items-center px-2">Options</h2>
-      <button type="button" class="nav on"><Icon name="inbox" />Inboxes</button>
-    </nav>
-
-    <section class="flex min-w-0 flex-1 flex-col p-[18px]">
-      <!-- Page title row, shared by every page, ends with the close cross -->
-      <div class="page flex items-center gap-2">
-        <h2 class="m-0 mr-auto">Inboxes</h2>
-        <button type="button" class="btn" onclick={() => (naming = { inbox: null, error: "" })}><Icon name="plus" />New</button>
-        <button type="button" class="btn ghost close" title="Close" aria-label="Close" onclick={onclose}><Icon name="close" /></button>
-      </div>
-      {#if error}<p class="error selectable">{error}</p>{/if}
-      <div class="min-h-0 flex-1 overflow-y-auto">
-        {#if !inboxes.length}<p class="m-0 py-4 text-muted">No inbox. One is created on the first mail sent with a new username.</p>{/if}
-        {#each inboxes as i (i.id)}
-          <div class="option">
-            <span class="text"><strong>{i.name}</strong><span>{i.count} {i.count === 1 ? "mail" : "mails"}</span></span>
-            <div class="flex gap-2">
-              <button type="button" class="btn" onclick={() => (naming = { inbox: i, error: "" })}><Icon name="pencil" />Rename</button>
-              <button type="button" class="btn danger" onclick={() => (deleting = i)}><Icon name="trash" />Delete</button>
-            </div>
+  <div class="flex h-[440px] flex-col">
+    <div class="page flex items-center gap-2">
+      <h2 class="m-0 mr-auto">Inboxes</h2>
+      <button type="button" class="btn" onclick={() => (naming = { inbox: null, error: "" })}><Icon name="plus" />New</button>
+      <button type="button" class="btn ghost close" title="Close" aria-label="Close" onclick={onclose}><Icon name="close" /></button>
+    </div>
+    {#if error}<p class="error selectable">{error}</p>{/if}
+    <div class="min-h-0 flex-1 overflow-y-auto">
+      {#if !inboxes.length}<p class="m-0 py-4 text-muted">No inbox. One is created on the first mail sent with a new username.</p>{/if}
+      {#each inboxes as i (i.id)}
+        <div class="option">
+          <span class="text"><strong>{i.name}</strong><span>{i.count} {i.count === 1 ? "mail" : "mails"}</span></span>
+          <div class="flex gap-2">
+            <button type="button" class="btn" onclick={() => (naming = { inbox: i, error: "" })}><Icon name="pencil" />Rename</button>
+            <button type="button" class="btn danger" onclick={() => (deleting = i)}><Icon name="trash" />Delete</button>
           </div>
-        {/each}
-      </div>
-    </section>
+        </div>
+      {/each}
+    </div>
   </div>
 </dialog>
 
@@ -109,7 +100,7 @@
 {/if}
 
 <style>
-  /* Page title on top, then one option per row (Wallo's options layout) */
+  /* Title row on top, then one inbox per row (Wallo's options layout) */
   .page {
     height: 34px;
     margin-bottom: 4px;
@@ -146,32 +137,7 @@
     color: var(--muted);
   }
   dialog {
-    width: 720px;
+    width: 560px;
     max-width: 90vw;
-    padding: 0;
-  }
-  .nav {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    height: 34px;
-    padding: 0 10px;
-    border: 0;
-    border-radius: 8px;
-    background: transparent;
-    color: var(--muted);
-    font:
-      500 13px system-ui,
-      sans-serif;
-    cursor: pointer;
-    text-align: left;
-  }
-  .nav:hover {
-    background: rgba(var(--accent-rgb), 0.1);
-    color: var(--text);
-  }
-  .nav.on {
-    background: rgba(var(--accent-rgb), 0.24);
-    color: var(--text);
   }
 </style>

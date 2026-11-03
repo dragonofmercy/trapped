@@ -3,14 +3,14 @@
   import { listInboxes, onMailReceived, type Inbox } from "./api";
   import MailList from "./components/MailList.svelte";
   import MailView from "./components/MailView.svelte";
-  import OptionsDialog from "./components/OptionsDialog.svelte";
+  import InboxesDialog from "./components/InboxesDialog.svelte";
   import TopBar from "./components/TopBar.svelte";
 
   let inboxes = $state<Inbox[]>([]);
   let currentInboxId = $state(0);
   let selectedMailId = $state<number | null>(null);
   let listKey = $state(0);
-  let showOptions = $state(false);
+  let showInboxes = $state(false);
 
   function select(id: number) {
     currentInboxId = id;
@@ -52,7 +52,7 @@
 </script>
 
 <div class="flex h-full flex-col gap-3 p-3">
-  <TopBar {inboxes} {currentInboxId} onselect={select} onchanged={inboxesChanged} onoptions={() => (showOptions = true)} />
+  <TopBar {inboxes} {currentInboxId} onselect={select} onmanage={() => (showInboxes = true)} />
   <div class="grid min-h-0 flex-1 grid-cols-[360px_1fr] gap-3">
     <MailList inboxId={currentInboxId} selectedId={selectedMailId} refreshKey={listKey} onselect={(id) => (selectedMailId = id)} onchanged={listChanged} />
     <MailView
@@ -66,6 +66,6 @@
   </div>
 </div>
 
-{#if showOptions}
-  <OptionsDialog {inboxes} onchanged={inboxesChanged} onclose={() => (showOptions = false)} />
+{#if showInboxes}
+  <InboxesDialog {inboxes} onchanged={inboxesChanged} onclose={() => (showInboxes = false)} />
 {/if}
