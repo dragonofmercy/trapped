@@ -128,21 +128,6 @@ dialog .buttons {
   margin-top: 18px;
 }
 
-dialog h2 {
-  margin: 0 0 12px;
-  font-family: Inter, sans-serif;
-  font-weight: 600;
-  font-size: 11.5px;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  color: var(--cyan);
-}
-
-dialog .error {
-  color: var(--danger);
-  margin: 10px 0 0;
-}
-
 /* Checkbox, radio: <label class="chk"><input type="..."><span class="box"><svg/></span>Text</label> */
 .chk {
   position: relative;
@@ -246,6 +231,22 @@ dialog .error {
 }
 
 @layer components {
+  /* In the components layer so Tailwind utilities (m-0, mr-auto...) can override them */
+  dialog h2 {
+    margin: 0 0 12px;
+    font-family: Inter, sans-serif;
+    font-weight: 600;
+    font-size: 11.5px;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--cyan);
+  }
+
+  dialog .error {
+    color: var(--danger);
+    margin: 10px 0 0;
+  }
+
   .label {
     font-family: Inter, sans-serif;
     font-weight: 600;
