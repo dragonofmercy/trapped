@@ -121,7 +121,7 @@
     background: transparent;
     color: var(--text);
     font:
-      500 13px Inter,
+      500 13px system-ui,
       sans-serif;
     cursor: pointer;
     white-space: nowrap;

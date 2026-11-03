@@ -161,7 +161,7 @@
     background: transparent;
     color: var(--muted);
     font:
-      500 13px Inter,
+      500 13px system-ui,
       sans-serif;
     cursor: pointer;
     text-align: left;
