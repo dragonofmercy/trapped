@@ -1,25 +1,14 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { createInbox, deleteInbox, renameInbox, type Inbox } from "../api";
-  import { getTheme, setTheme, type Theme } from "../theme";
   import ConfirmDialog from "./ConfirmDialog.svelte";
   import Icon from "./Icon.svelte";
   import NameDialog from "./NameDialog.svelte";
-  import Select from "./Select.svelte";
 
   let { inboxes, onchanged, onclose }: { inboxes: Inbox[]; onchanged: (selectId?: number) => void; onclose: () => void } = $props();
 
   let dialog: HTMLDialogElement;
   onMount(() => dialog.showModal());
-
-  let section = $state<"general" | "inboxes">("general");
-
-  const THEMES: { value: Theme; label: string }[] = [
-    { value: "system", label: "System" },
-    { value: "dark", label: "Dark" },
-    { value: "light", label: "Light" },
-  ];
-  let theme = $state(getTheme());
 
   // Name dialog for New and Rename; inbox = null means New
   type Naming = { inbox: Inbox | null; error: string };
@@ -70,40 +59,29 @@
     <!-- Both columns: same top padding and a 34px title row, so the two titles line up -->
     <nav class="flex w-44 flex-col gap-1 border-r border-line px-3 pt-[18px] pb-3">
       <h2 class="m-0 flex h-[34px] items-center px-2">Options</h2>
-      <button type="button" class="nav" class:on={section === "general"} onclick={() => (section = "general")}><Icon name="sliders" />General</button>
-      <button type="button" class="nav" class:on={section === "inboxes"} onclick={() => (section = "inboxes")}><Icon name="inbox" />Inboxes</button>
+      <button type="button" class="nav on"><Icon name="inbox" />Inboxes</button>
     </nav>
 
     <section class="flex min-w-0 flex-1 flex-col p-[18px]">
       <!-- Page title row, shared by every page, ends with the close cross -->
       <div class="page flex items-center gap-2">
-        <h2 class="m-0 mr-auto">{section === "general" ? "General" : "Inboxes"}</h2>
-        {#if section === "inboxes"}
-          <button type="button" class="btn" onclick={() => (naming = { inbox: null, error: "" })}><Icon name="plus" />New</button>
-        {/if}
+        <h2 class="m-0 mr-auto">Inboxes</h2>
+        <button type="button" class="btn" onclick={() => (naming = { inbox: null, error: "" })}><Icon name="plus" />New</button>
         <button type="button" class="btn ghost close" title="Close" aria-label="Close" onclick={onclose}><Icon name="close" /></button>
       </div>
-      {#if section === "general"}
-        <div class="option">
-          <span class="text"><strong>Theme</strong><span>Dark or light interface, or follow the Windows setting.</span></span>
-          <div class="w-40"><Select label="Theme" bind:value={() => theme, (v) => ((theme = v), setTheme(v))} options={THEMES} /></div>
-        </div>
-      {:else}
-        {#if error}<p class="error selectable">{error}</p>{/if}
-        <div class="min-h-0 flex-1 overflow-y-auto">
-          {#if !inboxes.length}<p class="m-0 py-4 text-muted">No inbox. One is created on the first mail sent with a new username.</p>{/if}
-          {#each inboxes as i (i.id)}
-            <div class="option">
-              <span class="text"><strong>{i.name}</strong><span>{i.count} {i.count === 1 ? "mail" : "mails"}</span></span>
-              <div class="flex gap-2">
-                <button type="button" class="btn" onclick={() => (naming = { inbox: i, error: "" })}><Icon name="pencil" />Rename</button>
-                <button type="button" class="btn danger" onclick={() => (deleting = i)}><Icon name="trash" />Delete</button>
-              </div>
+      {#if error}<p class="error selectable">{error}</p>{/if}
+      <div class="min-h-0 flex-1 overflow-y-auto">
+        {#if !inboxes.length}<p class="m-0 py-4 text-muted">No inbox. One is created on the first mail sent with a new username.</p>{/if}
+        {#each inboxes as i (i.id)}
+          <div class="option">
+            <span class="text"><strong>{i.name}</strong><span>{i.count} {i.count === 1 ? "mail" : "mails"}</span></span>
+            <div class="flex gap-2">
+              <button type="button" class="btn" onclick={() => (naming = { inbox: i, error: "" })}><Icon name="pencil" />Rename</button>
+              <button type="button" class="btn danger" onclick={() => (deleting = i)}><Icon name="trash" />Delete</button>
             </div>
-          {/each}
-        </div>
-      {/if}
-
+          </div>
+        {/each}
+      </div>
     </section>
   </div>
 </dialog>
