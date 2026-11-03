@@ -8,6 +8,7 @@ pub const MAX_SIZE: usize = 52_428_800;
 
 pub struct Received {
     pub inbox: String,
+    #[allow(dead_code)]
     pub mail_from: String,
     pub rcpt_to: Vec<String>,
     pub raw: Vec<u8>,
@@ -15,8 +16,11 @@ pub struct Received {
 
 pub async fn serve(listener: TcpListener, tx: UnboundedSender<Received>) {
     loop {
-        if let Ok((stream, _)) = listener.accept().await {
-            tokio::spawn(handle(stream, tx.clone()));
+        match listener.accept().await {
+            Ok((stream, _)) => {
+                tokio::spawn(handle(stream, tx.clone()));
+            }
+            Err(_) => tokio::time::sleep(std::time::Duration::from_millis(100)).await,
         }
     }
 }

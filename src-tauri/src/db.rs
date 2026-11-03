@@ -65,6 +65,7 @@ impl Db {
         Self::init(Connection::open(path)?)
     }
 
+    #[cfg(test)]
     pub fn open_in_memory() -> rusqlite::Result<Db> {
         Self::init(Connection::open_in_memory()?)
     }
