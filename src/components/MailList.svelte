@@ -109,7 +109,8 @@
 <div class="card flex min-h-0 flex-col gap-2 p-3">
   <input bind:value={query} oninput={search} class="field w-full" type="search" placeholder="Search mails" />
 
-  <div class="flex h-8 items-center gap-2 px-2">
+  <!-- Same transparent left border as the rows, so the checkboxes line up -->
+  <div class="flex h-8 items-center gap-2 border-l-2 border-transparent px-2">
     <label class="chk">
       <input type="checkbox" bind:this={allBox} checked={allChecked} disabled={!rows.length} aria-label="Select all" onchange={toggleAll} />
       {@render check()}
