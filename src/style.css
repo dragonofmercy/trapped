@@ -211,6 +211,8 @@ dialog .buttons {
     letter-spacing: 0.09em;
     text-transform: uppercase;
     color: var(--cyan);
+    /* Uppercase only: trim the box to the cap height so flex centering centers the letters, not the em box */
+    text-box: trim-both cap alphabetic;
   }
 
   dialog .error {
@@ -225,6 +227,8 @@ dialog .buttons {
     letter-spacing: 0.09em;
     text-transform: uppercase;
     color: var(--cyan);
+    /* Uppercase only: trim the box to the cap height so flex centering centers the letters, not the em box */
+    text-box: trim-both cap alphabetic;
   }
 
   .card {
