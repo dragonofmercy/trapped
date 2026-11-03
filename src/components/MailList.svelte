@@ -115,7 +115,7 @@
       <input type="checkbox" bind:this={allBox} checked={allChecked} disabled={!rows.length} aria-label="Select all" onchange={toggleAll} />
       {@render check()}
     </label>
-    <span class="label">Mails</span>
+    <span class="label">Inbox</span>
     {#if checked.length}
       <button type="button" class="btn danger ml-auto h-7" onclick={() => (confirmDelete = true)}><Icon name="trash" />Delete selection ({checked.length})</button>
     {/if}

@@ -1,8 +1,8 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { emptyInbox, onSmtpStatus, smtpRetry, smtpStatus, type Inbox, type SmtpStatus } from "../api";
-  import ConfirmDialog from "./ConfirmDialog.svelte";
+  import { onSmtpStatus, renameInbox, smtpRetry, smtpStatus, type Inbox, type SmtpStatus } from "../api";
   import Icon from "./Icon.svelte";
+  import NameDialog from "./NameDialog.svelte";
   import Select from "./Select.svelte";
 
   let { inboxes, currentInboxId, onselect, onchanged, onoptions }: { inboxes: Inbox[]; currentInboxId: number; onselect: (id: number) => void; onchanged: (selectId?: number) => void; onoptions: () => void } = $props();
@@ -37,23 +37,23 @@
     }
   }
 
-  // An error belongs to the inbox it happened on
-  let actionError = $state("");
-  $effect(() => {
-    void currentInboxId;
-    actionError = "";
-  });
-
-  let confirmEmpty = $state(false);
-  async function empty() {
-    confirmEmpty = false;
-    actionError = "";
+  // Edit renames the current inbox; backend errors stay in the dialog
+  let editing = $state<{ error: string } | null>(null);
+  function nameError(name: string) {
+    const n = name.trim();
+    if (!n) return "";
+    if (inboxes.some((i) => i.id !== currentInboxId && i.name.toLowerCase() === n.toLowerCase())) return "An inbox with this name already exists";
+    return null;
+  }
+  async function rename(name: string) {
+    const e = editing;
+    if (!e) return;
     try {
-      await emptyInbox(currentInboxId);
+      await renameInbox(currentInboxId, name);
+      editing = null;
       onchanged(currentInboxId);
-    } catch (e) {
-      actionError = String(e);
-      onchanged();
+    } catch (err) {
+      e.error = String(err);
     }
   }
 </script>
@@ -63,10 +63,8 @@
 {/snippet}
 
 <div class="card flex items-center gap-3 py-2.5">
-  <span class="label">Inbox</span>
   <div class="w-72"><Select label="Inbox" bind:value={() => currentInboxId, (v) => onselect(v)} {options} icon={inboxIcon} /></div>
-  <button type="button" class="btn warn" disabled={!current?.count} onclick={() => (confirmEmpty = true)}><Icon name="trash" />Empty</button>
-  {#if actionError}<span class="selectable text-danger">{actionError}</span>{/if}
+  <button type="button" class="btn" disabled={!current} onclick={() => (editing = { error: "" })}><Icon name="pencil" />Edit</button>
 
   <div class="ml-auto flex items-center gap-2">
     {#if status?.listening}
@@ -81,6 +79,6 @@
   </div>
 </div>
 
-{#if confirmEmpty}
-  <ConfirmDialog title="Empty Inbox" message={`Delete all mails in "${current?.name}"?`} confirmLabel="Empty" onconfirm={empty} oncancel={() => (confirmEmpty = false)} />
+{#if editing && current}
+  <NameDialog title="Rename Inbox" initial={current.name} validate={nameError} error={editing.error} onconfirm={rename} oncancel={() => (editing = null)} />
 {/if}
