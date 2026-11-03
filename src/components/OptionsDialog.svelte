@@ -101,11 +101,11 @@
         </div>
       {/if}
 
-      <div class="buttons mt-auto pt-[18px]">
-        <button type="button" class="btn ghost" onclick={onclose}>Close</button>
-      </div>
     </section>
   </div>
+  <footer class="buttons m-0 border-t border-line px-[18px] py-3">
+    <button type="button" class="btn ghost" onclick={onclose}>Close</button>
+  </footer>
 </dialog>
 
 {#if naming}
