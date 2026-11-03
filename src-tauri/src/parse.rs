@@ -49,13 +49,17 @@ fn html_body(msg: &Message) -> Option<String> {
 
 /// A part counts as an attachment when it has a filename or an explicit attachment disposition.
 fn is_listed(part: &mail_parser::MessagePart) -> bool {
-    part.attachment_name().is_some() || part.content_disposition().is_some_and(|d| d.is_attachment())
+    if part.content_disposition().is_some_and(|d| d.is_attachment()) {
+        return true;
+    }
+    // An inline image referenced by cid is not a user-facing attachment even when it carries a filename.
+    part.attachment_name().is_some() && part.content_id().is_none()
 }
 
 pub fn summarize(raw: &[u8], rcpt_to: &[String]) -> Summary {
     let msg = MessageParser::default().parse(raw);
     let msg = msg.as_ref();
-    let subject = msg.and_then(|m| m.subject()).map(str::to_string).unwrap_or_else(|| "(no subject)".to_string());
+    let subject = msg.and_then(|m| m.subject()).filter(|s| !s.trim().is_empty()).map(str::to_string).unwrap_or_else(|| "(no subject)".to_string());
     let from = msg.map(|m| emails(m.from())).and_then(|v| v.into_iter().next()).unwrap_or_default();
     let to = msg.map(|m| emails(m.to())).unwrap_or_default();
     let cc = msg.map(|m| emails(m.cc())).unwrap_or_default();
@@ -91,27 +95,17 @@ pub fn detail(raw: &[u8]) -> Detail {
     };
     // Inline cid parts are needed for substitution but are not listed to the user.
     let mut all = Vec::new();
-    let mut listed = Vec::new();
+    let mut flags = Vec::new();
     for part in msg.attachments() {
         let mime = part.content_type().map(|c| format!("{}/{}", c.ctype(), c.subtype().unwrap_or("octet-stream"))).unwrap_or_else(|| "application/octet-stream".to_string());
-        let mut a = Attachment {
+        flags.push(is_listed(part));
+        all.push(Attachment {
             index: 0,
             name: part.attachment_name().unwrap_or("attachment").to_string(),
             mime,
             content_id: part.content_id().map(|c| c.trim_matches(|ch| ch == '<' || ch == '>').to_string()),
             data: part.contents().to_vec(),
-        };
-        if is_listed(part) {
-            a.index = listed.len();
-            listed.push(Attachment {
-                index: a.index,
-                name: a.name.clone(),
-                mime: a.mime.clone(),
-                content_id: a.content_id.clone(),
-                data: a.data.clone(),
-            });
-        }
-        all.push(a);
+        });
     }
     let html = html_body(&msg).map(|h| inline_cids(&h, &all));
     Detail {
@@ -119,7 +113,7 @@ pub fn detail(raw: &[u8]) -> Detail {
         html,
         text: text_body(&msg),
         headers: msg.headers_raw().map(|(k, v)| (k.to_string(), v.trim().to_string())).collect(),
-        attachments: listed,
+        attachments: all.into_iter().zip(flags).filter(|(_, l)| *l).enumerate().map(|(i, (a, _))| Attachment { index: i, ..a }).collect(),
     }
 }
 
@@ -147,13 +141,31 @@ pub fn strip_html(html: &str) -> String {
     decoded.split_whitespace().collect::<Vec<_>>().join(" ")
 }
 
+/// Replaces `needle` only when followed by a delimiter, so "cid:logo1" never matches inside "cid:logo10".
+fn replace_cid(html: &str, needle: &str, uri: &str) -> String {
+    let mut out = String::with_capacity(html.len());
+    let mut rest = html;
+    while let Some(p) = rest.find(needle) {
+        let after = &rest[p + needle.len()..];
+        out.push_str(&rest[..p]);
+        if after.chars().next().is_none_or(|c| c.is_whitespace() || matches!(c, '"' | '\'' | ')' | '>')) {
+            out.push_str(uri);
+        } else {
+            out.push_str(needle);
+        }
+        rest = after;
+    }
+    out.push_str(rest);
+    out
+}
+
 pub fn inline_cids(html: &str, attachments: &[Attachment]) -> String {
     let mut out = html.to_string();
     for a in attachments {
         if let Some(id) = a.content_id.as_deref() {
             let id = id.trim_matches(|c| c == '<' || c == '>');
             let uri = format!("data:{};base64,{}", a.mime, base64::engine::general_purpose::STANDARD.encode(&a.data));
-            out = out.replace(&format!("cid:{id}"), &uri);
+            out = replace_cid(&out, &format!("cid:{id}"), &uri);
         }
     }
     out
@@ -237,6 +249,77 @@ mod tests {
         assert!(h.contains("data:image/png;base64,"));
         assert!(d.attachments.is_empty());
         assert!(!summarize(WITH_CID_IMAGE, &[]).has_attachments);
+    }
+
+    #[test]
+    fn cid_prefix_and_brackets() {
+        let raw: &[u8] = b"From: a@x.test
+Subject: i
+MIME-Version: 1.0
+Content-Type: multipart/related; boundary=\"b\"
+
+--b
+Content-Type: text/html
+
+<img src=\"cid:logo1\"><img src='cid:logo10'>
+--b
+Content-Type: image/png
+Content-ID: <logo1>
+Content-Transfer-Encoding: base64
+
+AAAA
+--b
+Content-Type: image/gif
+Content-ID: logo10
+Content-Transfer-Encoding: base64
+
+BBBB
+--b--
+";
+        let h = detail(raw).html.unwrap();
+        assert!(!h.contains("cid:"), "{h}");
+        assert!(h.contains("\"data:image/png;base64,AAAA\""), "{h}");
+        assert!(h.contains("'data:image/gif;base64,BBBB'"), "{h}");
+    }
+
+    #[test]
+    fn inline_image_with_filename_not_listed() {
+        let raw: &[u8] = b"From: a@x.test
+Subject: i
+MIME-Version: 1.0
+Content-Type: multipart/related; boundary=\"b\"
+
+--b
+Content-Type: text/html
+
+<img src=\"cid:logo1\">
+--b
+Content-Type: image/png; name=\"logo.png\"
+Content-ID: <logo1>
+Content-Disposition: inline; filename=\"logo.png\"
+Content-Transfer-Encoding: base64
+
+AAAA
+--b--
+";
+        let d = detail(raw);
+        assert!(d.attachments.is_empty());
+        assert!(!summarize(raw, &[]).has_attachments);
+        assert!(d.html.unwrap().contains("data:image/png;base64,"));
+    }
+
+    #[test]
+    fn empty_subject_falls_back() {
+        assert_eq!(
+            summarize(
+                b"Subject:
+
+x",
+                &[]
+            )
+            .subject,
+            "(no subject)"
+        );
     }
 
     #[test]
