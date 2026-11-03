@@ -5,6 +5,7 @@
   import ConfirmDialog from "./ConfirmDialog.svelte";
   import Icon from "./Icon.svelte";
   import NameDialog from "./NameDialog.svelte";
+  import Select from "./Select.svelte";
 
   let { inboxes, onchanged, onclose }: { inboxes: Inbox[]; onchanged: (selectId?: number) => void; onclose: () => void } = $props();
 
@@ -14,7 +15,7 @@
   let section = $state<"general" | "inboxes">("general");
 
   const THEMES: { value: Theme; label: string }[] = [
-    { value: "system", label: "Follow Windows setting" },
+    { value: "system", label: "System" },
     { value: "dark", label: "Dark" },
     { value: "light", label: "Light" },
   ];
@@ -74,31 +75,30 @@
 
     <section class="flex min-w-0 flex-1 flex-col p-[18px]">
       {#if section === "general"}
-        <h2>Theme</h2>
-        <div class="flex flex-col gap-[9px]">
-          {#each THEMES as t (t.value)}
-            <label class="chk radio"><input type="radio" name="theme" value={t.value} bind:group={theme} onchange={() => setTheme(theme)} /><span class="box"></span>{t.label}</label>
-          {/each}
+        <h3 class="page">General</h3>
+        <div class="option">
+          <span class="text"><strong>Theme</strong><span>Dark or light interface, or follow the Windows setting.</span></span>
+          <div class="w-40"><Select label="Theme" bind:value={() => theme, (v) => ((theme = v), setTheme(v))} options={THEMES} /></div>
         </div>
       {:else}
-        <div class="flex items-center">
-          <h2 class="m-0">Inboxes</h2>
+        <div class="page flex items-center">
+          <h3 class="m-0">Inboxes</h3>
           <button type="button" class="btn ml-auto" onclick={() => (naming = { inbox: null, error: "" })}><Icon name="plus" />New</button>
         </div>
         {#if error}<p class="error selectable">{error}</p>{/if}
-        <ul class="m-0 mt-3 flex min-h-0 flex-1 list-none flex-col gap-1.5 overflow-y-auto p-0">
+        <div class="min-h-0 flex-1 overflow-y-auto">
           {#each inboxes as i (i.id)}
-            <li class="flex h-11 items-center gap-2 rounded-lg border border-line px-3">
-              <span class="flex text-cyan"><Icon name="inbox" /></span>
-              <span class="min-w-0 flex-1 truncate font-medium">{i.name}</span>
-              <span class="font-mono text-muted">{i.count}</span>
+            <div class="option">
+              <span class="text"><strong>{i.name}</strong><span>{i.count} {i.count === 1 ? "mail" : "mails"}{i.name === "Default" ? " - mail sent without a username" : ""}</span></span>
               {#if i.name !== "Default"}
-                <button type="button" class="btn ghost h-8 px-2.5" title="Rename" aria-label={`Rename ${i.name}`} onclick={() => (naming = { inbox: i, error: "" })}><Icon name="pencil" /></button>
-                <button type="button" class="btn danger h-8 px-2.5" title="Delete" aria-label={`Delete ${i.name}`} onclick={() => (deleting = i)}><Icon name="trash" /></button>
+                <div class="flex gap-2">
+                  <button type="button" class="btn" onclick={() => (naming = { inbox: i, error: "" })}><Icon name="pencil" />Rename</button>
+                  <button type="button" class="btn danger" onclick={() => (deleting = i)}><Icon name="trash" />Delete</button>
+                </div>
               {/if}
-            </li>
+            </div>
           {/each}
-        </ul>
+        </div>
       {/if}
 
       <div class="buttons mt-auto pt-[18px]">
@@ -131,6 +131,43 @@
 {/if}
 
 <style>
+  /* Page title on top, then one option per row (Wallo's options layout) */
+  .page {
+    margin: 0;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--line);
+    font-size: 15px;
+    font-weight: 600;
+  }
+  .page h3 {
+    font-size: inherit;
+    font-weight: inherit;
+  }
+  .option {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding: 14px 0;
+  }
+  .option + .option {
+    border-top: 1px solid var(--line);
+  }
+  .text {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .text strong {
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .text span {
+    color: var(--muted);
+  }
   dialog {
     width: 720px;
     max-width: 90vw;
