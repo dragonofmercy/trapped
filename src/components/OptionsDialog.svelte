@@ -74,17 +74,20 @@
     </nav>
 
     <section class="flex min-w-0 flex-1 flex-col p-[18px]">
+      <!-- Page title row, shared by every page, ends with the close cross -->
+      <div class="page flex items-center gap-2">
+        <h3 class="m-0 mr-auto">{section === "general" ? "General" : "Inboxes"}</h3>
+        {#if section === "inboxes"}
+          <button type="button" class="btn" onclick={() => (naming = { inbox: null, error: "" })}><Icon name="plus" />New</button>
+        {/if}
+        <button type="button" class="btn ghost close" title="Close" aria-label="Close" onclick={onclose}><Icon name="close" /></button>
+      </div>
       {#if section === "general"}
-        <h3 class="page">General</h3>
         <div class="option">
           <span class="text"><strong>Theme</strong><span>Dark or light interface, or follow the Windows setting.</span></span>
           <div class="w-40"><Select label="Theme" bind:value={() => theme, (v) => ((theme = v), setTheme(v))} options={THEMES} /></div>
         </div>
       {:else}
-        <div class="page flex items-center">
-          <h3 class="m-0">Inboxes</h3>
-          <button type="button" class="btn ml-auto" onclick={() => (naming = { inbox: null, error: "" })}><Icon name="plus" />New</button>
-        </div>
         {#if error}<p class="error selectable">{error}</p>{/if}
         <div class="min-h-0 flex-1 overflow-y-auto">
           {#each inboxes as i (i.id)}
@@ -103,9 +106,6 @@
 
     </section>
   </div>
-  <footer class="buttons m-0 border-t border-line px-[18px] py-3">
-    <button type="button" class="btn ghost" onclick={onclose}>Close</button>
-  </footer>
 </dialog>
 
 {#if naming}
@@ -142,6 +142,12 @@
   .page h3 {
     font-size: inherit;
     font-weight: inherit;
+  }
+  .close {
+    width: 34px;
+    padding: 0;
+    justify-content: center;
+    border-color: transparent;
   }
   .option {
     display: flex;
