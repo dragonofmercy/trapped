@@ -1,6 +1,9 @@
 #[allow(dead_code)]
 mod parse;
 
+#[allow(dead_code)]
+mod db;
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
