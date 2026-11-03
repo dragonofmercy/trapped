@@ -96,6 +96,7 @@ pub fn run() {
             commands::list_inboxes,
             commands::list_mails,
             commands::get_mail,
+            commands::get_raw,
             commands::delete_mails,
             commands::empty_inbox,
             commands::rename_inbox,

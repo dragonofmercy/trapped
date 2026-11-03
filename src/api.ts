@@ -37,7 +37,6 @@ export interface MailDetail {
   receivedAt: number;
   html: string | null;
   text: string | null;
-  raw: string;
   headers: [string, string][];
   attachments: AttachmentInfo[];
 }
@@ -51,6 +50,7 @@ export interface SmtpStatus {
 export const listInboxes = () => invoke<Inbox[]>("list_inboxes");
 export const listMails = (inboxId: number, query: string) => invoke<MailRow[]>("list_mails", { inboxId, query });
 export const getMail = (id: number) => invoke<MailDetail>("get_mail", { id });
+export const getRaw = (id: number) => invoke<string>("get_raw", { id });
 export const deleteMails = (ids: number[]) => invoke<void>("delete_mails", { ids });
 export const emptyInbox = (inboxId: number) => invoke<void>("empty_inbox", { inboxId });
 export const renameInbox = (inboxId: number, name: string) => invoke<void>("rename_inbox", { inboxId, name });

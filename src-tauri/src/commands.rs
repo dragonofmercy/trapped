@@ -6,7 +6,7 @@ use tauri::{AppHandle, Emitter, Manager, State};
 use tokio::net::TcpListener;
 use tokio::sync::mpsc::UnboundedSender;
 
-const BLOCKED: [&str; 13] = ["exe", "bat", "cmd", "com", "ps1", "msi", "js", "vbs", "scr", "jar", "lnk", "reg", "hta"];
+const BLOCKED: [&str; 21] = ["exe", "bat", "cmd", "com", "ps1", "msi", "js", "vbs", "scr", "jar", "lnk", "reg", "hta", "msc", "cpl", "wsf", "psm1", "url", "chm", "appref-ms", "pif"];
 
 pub type DbState = Mutex<Db>;
 pub type StatusState = Mutex<SmtpStatus>;
@@ -36,7 +36,6 @@ pub struct MailDetail {
     pub received_at: i64,
     pub html: Option<String>,
     pub text: Option<String>,
-    pub raw: String,
     pub headers: Vec<(String, String)>,
     pub attachments: Vec<AttachmentInfo>,
 }
@@ -65,10 +64,14 @@ pub async fn start_smtp(tx: UnboundedSender<smtp::Received>) -> SmtpStatus {
                 error: None,
             }
         }
-        Err(e) => SmtpStatus {
+        Err(err) => SmtpStatus {
             listening: false,
             address: smtp::ADDR.into(),
-            error: Some(e.to_string()),
+            error: Some(if err.kind() == std::io::ErrorKind::AddrInUse {
+                format!("Port {} is already in use (is another SMTP catcher like smtp4dev running?)", smtp::ADDR.rsplit(':').next().unwrap_or("2525"))
+            } else {
+                format!("Cannot listen on {}: {err}", smtp::ADDR)
+            }),
         },
     }
 }
@@ -78,12 +81,12 @@ fn e<T: ToString>(err: T) -> String {
 }
 
 #[tauri::command]
-pub fn list_inboxes(db: State<DbState>) -> Result<Vec<InboxRow>, String> {
+pub async fn list_inboxes(db: State<'_, DbState>) -> Result<Vec<InboxRow>, String> {
     db.lock().unwrap_or_else(|p| p.into_inner()).list_inboxes().map_err(e)
 }
 
 #[tauri::command]
-pub fn list_mails(db: State<DbState>, inbox_id: i64, query: String) -> Result<Vec<MailRow>, String> {
+pub async fn list_mails(db: State<'_, DbState>, inbox_id: i64, query: String) -> Result<Vec<MailRow>, String> {
     db.lock().unwrap_or_else(|p| p.into_inner()).list_mails(inbox_id, &query).map_err(e)
 }
 
@@ -103,7 +106,6 @@ pub async fn get_mail(app: AppHandle, id: i64) -> Result<MailDetail, String> {
         received_at: m.received_at,
         html: d.html,
         text: d.text,
-        raw: String::from_utf8_lossy(&m.raw).into_owned(),
         headers: d.headers,
         attachments: d
             .attachments
@@ -120,28 +122,34 @@ pub async fn get_mail(app: AppHandle, id: i64) -> Result<MailDetail, String> {
 }
 
 #[tauri::command]
-pub fn delete_mails(db: State<DbState>, ids: Vec<i64>) -> Result<(), String> {
+pub async fn get_raw(db: State<'_, DbState>, id: i64) -> Result<String, String> {
+    let raw = db.lock().unwrap_or_else(|p| p.into_inner()).get_raw(id).map_err(e)?;
+    Ok(String::from_utf8_lossy(&raw).into_owned())
+}
+
+#[tauri::command]
+pub async fn delete_mails(db: State<'_, DbState>, ids: Vec<i64>) -> Result<(), String> {
     db.lock().unwrap_or_else(|p| p.into_inner()).delete_mails(&ids).map_err(e)
 }
 
 #[tauri::command]
-pub fn empty_inbox(db: State<DbState>, inbox_id: i64) -> Result<(), String> {
+pub async fn empty_inbox(db: State<'_, DbState>, inbox_id: i64) -> Result<(), String> {
     db.lock().unwrap_or_else(|p| p.into_inner()).empty_inbox(inbox_id).map_err(e)
 }
 
 #[tauri::command]
-pub fn rename_inbox(db: State<DbState>, inbox_id: i64, name: String) -> Result<(), String> {
+pub async fn rename_inbox(db: State<'_, DbState>, inbox_id: i64, name: String) -> Result<(), String> {
     db.lock().unwrap_or_else(|p| p.into_inner()).rename_inbox(inbox_id, &name)
 }
 
 #[tauri::command]
-pub fn delete_inbox(db: State<DbState>, inbox_id: i64) -> Result<(), String> {
+pub async fn delete_inbox(db: State<'_, DbState>, inbox_id: i64) -> Result<(), String> {
     db.lock().unwrap_or_else(|p| p.into_inner()).delete_inbox(inbox_id)
 }
 
 #[tauri::command]
-pub fn smtp_status(status: State<StatusState>) -> SmtpStatus {
-    status.lock().unwrap_or_else(|p| p.into_inner()).clone()
+pub async fn smtp_status(status: State<'_, StatusState>) -> Result<SmtpStatus, String> {
+    Ok(status.lock().unwrap_or_else(|p| p.into_inner()).clone())
 }
 
 #[tauri::command]
@@ -197,6 +205,8 @@ mod tests {
         assert!(is_blocked_extension("x.exe."));
         assert!(is_blocked_extension("x.EXE "));
         assert!(is_blocked_extension("x.exe. ."));
+        assert!(is_blocked_extension("a.MSC"));
+        assert!(is_blocked_extension("b.appref-ms"));
         assert!(!is_blocked_extension("invoice.pdf"));
         assert!(!is_blocked_extension("noext"));
     }

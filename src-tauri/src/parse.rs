@@ -31,6 +31,10 @@ fn emails(addr: Option<&Address>) -> Vec<String> {
     addr.map(|a| a.iter().filter_map(|x: &Addr| x.address.as_deref()).map(str::to_string).collect()).unwrap_or_default()
 }
 
+fn names(addr: Option<&Address>) -> Vec<String> {
+    addr.map(|a| a.iter().filter_map(|x: &Addr| x.name.as_deref()).map(str::to_string).collect()).unwrap_or_default()
+}
+
 /// First text/plain body part only (no html-to-text fallback).
 fn text_body(msg: &Message) -> Option<String> {
     match &msg.text_part(0)?.body {
@@ -69,6 +73,9 @@ pub fn summarize(raw: &[u8], rcpt_to: &[String]) -> Summary {
     let html = msg.and_then(html_body).map(|h| strip_html(&h)).unwrap_or_default();
     let mut parts = vec![subject.clone(), from.clone()];
     parts.extend(to.iter().chain(cc.iter()).chain(bcc.iter()).cloned());
+    if let Some(m) = msg {
+        parts.extend(names(m.from()).into_iter().chain(names(m.to())).chain(names(m.cc())));
+    }
     parts.push(text);
     parts.push(html);
     let search_text = parts.join(" ").to_lowercase();
@@ -175,7 +182,7 @@ pub fn inline_cids(html: &str, attachments: &[Attachment]) -> String {
 mod tests {
     use super::*;
 
-    const MULTIPART: &[u8] = b"From: App <noreply@app.test>\r\nTo: a@x.test\r\nCc: c@x.test\r\nSubject: Confirm your email\r\nMIME-Version: 1.0\r\nContent-Type: multipart/alternative; boundary=\"b\"\r\n\r\n--b\r\nContent-Type: text/plain\r\n\r\nplease verify my email\r\n--b\r\nContent-Type: text/html\r\n\r\n<p><a href=\"http://x.test\">verify my email</a></p>\r\n--b--\r\n";
+    const MULTIPART: &[u8] = b"From: MyApp <noreply@app.test>\r\nTo: a@x.test\r\nCc: c@x.test\r\nSubject: Confirm your email\r\nMIME-Version: 1.0\r\nContent-Type: multipart/alternative; boundary=\"b\"\r\n\r\n--b\r\nContent-Type: text/plain\r\n\r\nplease verify my email\r\n--b\r\nContent-Type: text/html\r\n\r\n<p><a href=\"http://x.test\">verify my email</a></p>\r\n--b--\r\n";
     const HTML_ONLY: &[u8] = b"From: a@x.test\r\nSubject: h\r\nContent-Type: text/html\r\n\r\n<p>Hi</p>\r\n";
     const TEXT_ONLY: &[u8] = b"From: a@x.test\r\nSubject: t\r\nContent-Type: text/plain\r\n\r\nHello\r\n";
     const WITH_PDF: &[u8] = b"From: a@x.test\r\nSubject: p\r\nMIME-Version: 1.0\r\nContent-Type: multipart/mixed; boundary=\"b\"\r\n\r\n--b\r\nContent-Type: text/plain\r\n\r\nSee attached\r\n--b\r\nContent-Type: application/pdf; name=\"invoice.pdf\"\r\nContent-Disposition: attachment; filename=\"invoice.pdf\"\r\nContent-Transfer-Encoding: base64\r\n\r\nJVBERi0xLjQK\r\n--b--\r\n";
@@ -196,6 +203,7 @@ mod tests {
         assert!(!s.has_attachments);
         assert!(s.search_text.contains("verify my email"));
         assert!(!s.search_text.contains("<a"));
+        assert!(s.search_text.contains("myapp"));
     }
 
     #[test]

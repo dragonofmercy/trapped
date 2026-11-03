@@ -2,7 +2,7 @@
 import { computed, ref, watch } from "vue";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { save } from "@tauri-apps/plugin-dialog";
-import { deleteMails, getMail, openAttachment, saveAttachment, type MailDetail } from "../api";
+import { deleteMails, getMail, getRaw, openAttachment, saveAttachment, type MailDetail } from "../api";
 
 const props = defineProps<{ mailId: number | null }>();
 const emit = defineEmits<{ deleted: []; read: [] }>();
@@ -42,6 +42,25 @@ watch(
   { immediate: true },
 );
 
+// Raw source is loaded lazily when the Source tab opens (cached per mail id)
+const raw = ref<{ id: number; text: string } | null>(null);
+const rawError = ref("");
+let rawSeq = 0;
+watch(
+  () => [tab.value, mail.value?.id] as const,
+  async ([t, id]) => {
+    if (t !== "source" || id === undefined || raw.value?.id === id) return;
+    const n = ++rawSeq;
+    rawError.value = "";
+    try {
+      const text = await getRaw(id);
+      if (n === rawSeq) raw.value = { id, text };
+    } catch (e) {
+      if (n === rawSeq) rawError.value = String(e);
+    }
+  },
+);
+
 const tabs = computed<{ id: Tab; label: string }[]>(() => [
   { id: "html", label: "HTML" },
   { id: "text", label: "Text" },
@@ -66,11 +85,13 @@ function onFrameLoad(ev: Event) {
   const doc = (ev.target as HTMLIFrameElement).contentDocument;
   if (!doc) return;
   doc.addEventListener("click", (e) => {
-    const a = (e.target as Element | null)?.closest?.("a[href]");
+    const a = (e.target as Element | null)?.closest?.("a[href], area[href]");
     if (!a) return;
+    // in-page anchors keep working
+    if (a.getAttribute("href")?.trim().startsWith("#")) return;
     e.preventDefault();
-    const href = a.getAttribute("href") ?? "";
-    if (/^(https?:|mailto:)/i.test(href)) openUrl(href).catch((err) => (actionError.value = String(err)));
+    const url = (a as HTMLAnchorElement | HTMLAreaElement).href;
+    if (/^(https?:|mailto:)/i.test(url)) openUrl(url).catch((err) => (actionError.value = String(err)));
   });
   doc.addEventListener("submit", (e) => e.preventDefault());
 }
@@ -156,7 +177,8 @@ async function confirmDelete() {
           ></iframe>
         </template>
         <pre v-else-if="tab === 'text'" class="selectable m-0 whitespace-pre-wrap break-words font-mono">{{ mail.text ?? "(no text part)" }}</pre>
-        <pre v-else-if="tab === 'source'" class="selectable m-0 font-mono">{{ mail.raw }}</pre>
+        <p v-else-if="tab === 'source' && rawError" class="selectable m-0 text-danger">{{ rawError }}</p>
+        <pre v-else-if="tab === 'source'" class="selectable m-0 font-mono">{{ raw?.id === mail.id ? raw.text : "Loading..." }}</pre>
         <table v-else-if="tab === 'headers'" class="selectable w-full border-collapse font-mono">
           <tr v-for="(h, i) in mail.headers" :key="i" class="border-b border-line align-top">
             <th class="whitespace-nowrap py-1 pr-4 text-left font-bold text-muted">{{ h[0] }}</th>
