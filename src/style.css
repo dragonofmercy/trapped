@@ -202,7 +202,11 @@ dialog .error {
   transform: none;
 }
 
-/* Partial selection: a dash instead of the check mark */
+/* Partial selection: a dash instead of the check mark (the hidden svg would push the dash off center) */
+.chk input:indeterminate + .box svg {
+  display: none;
+}
+
 .chk input:indeterminate + .box::before {
   content: "";
   width: 9px;
