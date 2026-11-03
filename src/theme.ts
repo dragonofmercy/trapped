@@ -1,11 +1,11 @@
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { ref, watch } from "vue";
 
 export type Theme = "system" | "dark" | "light";
 
 const KEY = "theme";
+const media = matchMedia("(prefers-color-scheme: light)");
 
-function load(): Theme {
+export function getTheme(): Theme {
   try {
     const t = localStorage.getItem(KEY);
     if (t === "dark" || t === "light") return t;
@@ -15,30 +15,24 @@ function load(): Theme {
   return "system";
 }
 
-export const theme = ref<Theme>(load());
-
-const media = matchMedia("(prefers-color-scheme: light)");
-
 function apply() {
-  const light = theme.value === "light" || (theme.value === "system" && media.matches);
+  const t = getTheme();
+  const light = t === "light" || (t === "system" && media.matches);
   document.documentElement.dataset.theme = light ? "light" : "dark";
 }
 
-media.addEventListener("change", apply);
+export function setTheme(t: Theme) {
+  try {
+    localStorage.setItem(KEY, t);
+  } catch {
+    // Not persisted, still applied for this session
+  }
+  apply();
+  // Native title bar follows the choice too
+  getCurrentWindow()
+    .setTheme(t === "system" ? null : t)
+    .catch(() => {});
+}
 
-watch(
-  theme,
-  (t) => {
-    try {
-      localStorage.setItem(KEY, t);
-    } catch {
-      // Not persisted, still applied for this session
-    }
-    apply();
-    // Native title bar follows the choice too
-    getCurrentWindow()
-      .setTheme(t === "system" ? null : t)
-      .catch(() => {});
-  },
-  { immediate: true },
-);
+media.addEventListener("change", apply);
+setTheme(getTheme());

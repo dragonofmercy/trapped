@@ -1,0 +1,71 @@
+<script lang="ts">
+  import { onMount } from "svelte";
+  import { listInboxes, onMailReceived, type Inbox } from "./api";
+  import MailList from "./components/MailList.svelte";
+  import MailView from "./components/MailView.svelte";
+  import OptionsDialog from "./components/OptionsDialog.svelte";
+  import TopBar from "./components/TopBar.svelte";
+
+  let inboxes = $state<Inbox[]>([]);
+  let currentInboxId = $state(0);
+  let selectedMailId = $state<number | null>(null);
+  let listKey = $state(0);
+  let showOptions = $state(false);
+
+  function select(id: number) {
+    currentInboxId = id;
+    selectedMailId = null;
+  }
+
+  async function reload(selectId?: number) {
+    inboxes = await listInboxes();
+    if (selectId !== undefined) select(selectId);
+    else if (!inboxes.some((i) => i.id === currentInboxId)) select(inboxes[0].id);
+  }
+
+  onMount(() => {
+    let unlisten: (() => void) | undefined;
+    let dead = false;
+    onMailReceived(() => reload().catch(() => {})).then((u) => (dead ? u() : (unlisten = u)));
+    reload().catch(() => {});
+    return () => {
+      dead = true;
+      unlisten?.();
+    };
+  });
+
+  function refresh() {
+    listKey++;
+    reload().catch(() => {});
+  }
+
+  function inboxesChanged(selectId?: number) {
+    listKey++;
+    selectedMailId = null;
+    reload(selectId).catch(() => {});
+  }
+
+  function listChanged(deletedIds: number[]) {
+    if (selectedMailId !== null && deletedIds.includes(selectedMailId)) selectedMailId = null;
+    reload().catch(() => {});
+  }
+</script>
+
+<div class="flex h-full flex-col gap-3 p-3">
+  <TopBar {inboxes} {currentInboxId} onselect={select} onchanged={inboxesChanged} onoptions={() => (showOptions = true)} />
+  <div class="grid min-h-0 flex-1 grid-cols-[360px_1fr] gap-3">
+    <MailList inboxId={currentInboxId} selectedId={selectedMailId} refreshKey={listKey} onselect={(id) => (selectedMailId = id)} onchanged={listChanged} />
+    <MailView
+      mailId={selectedMailId}
+      onread={refresh}
+      ondeleted={() => {
+        selectedMailId = null;
+        refresh();
+      }}
+    />
+  </div>
+</div>
+
+{#if showOptions}
+  <OptionsDialog {inboxes} onchanged={inboxesChanged} onclose={() => (showOptions = false)} />
+{/if}
