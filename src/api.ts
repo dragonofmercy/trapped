@@ -1,0 +1,64 @@
+import { invoke } from "@tauri-apps/api/core";
+import { listen, type UnlistenFn } from "@tauri-apps/api/event";
+
+export interface Inbox {
+  id: number;
+  name: string;
+  count: number;
+  unread: number;
+}
+
+export interface MailRow {
+  id: number;
+  subject: string;
+  from: string;
+  receivedAt: number;
+  hasAttachments: boolean;
+  isRead: boolean;
+}
+
+export interface AttachmentInfo {
+  index: number;
+  name: string;
+  mime: string;
+  size: number;
+  blocked: boolean;
+}
+
+export interface MailDetail {
+  id: number;
+  inboxId: number;
+  subject: string;
+  from: string;
+  to: string[];
+  cc: string[];
+  bcc: string[];
+  date: string | null;
+  receivedAt: number;
+  html: string | null;
+  text: string | null;
+  raw: string;
+  headers: [string, string][];
+  attachments: AttachmentInfo[];
+}
+
+export interface SmtpStatus {
+  listening: boolean;
+  address: string;
+  error: string | null;
+}
+
+export const listInboxes = () => invoke<Inbox[]>("list_inboxes");
+export const listMails = (inboxId: number, query: string) => invoke<MailRow[]>("list_mails", { inboxId, query });
+export const getMail = (id: number) => invoke<MailDetail>("get_mail", { id });
+export const deleteMails = (ids: number[]) => invoke<void>("delete_mails", { ids });
+export const emptyInbox = (inboxId: number) => invoke<void>("empty_inbox", { inboxId });
+export const renameInbox = (inboxId: number, name: string) => invoke<void>("rename_inbox", { inboxId, name });
+export const deleteInbox = (inboxId: number) => invoke<void>("delete_inbox", { inboxId });
+export const smtpStatus = () => invoke<SmtpStatus>("smtp_status");
+export const smtpRetry = () => invoke<SmtpStatus>("smtp_retry");
+export const openAttachment = (mailId: number, index: number) => invoke<void>("open_attachment", { mailId, index });
+export const saveAttachment = (mailId: number, index: number, path: string) => invoke<void>("save_attachment", { mailId, index, path });
+
+export const onMailReceived = (cb: (inboxId: number) => void): Promise<UnlistenFn> => listen<{ inboxId: number }>("mail-received", (e) => cb(e.payload.inboxId));
+export const onSmtpStatus = (cb: (s: SmtpStatus) => void): Promise<UnlistenFn> => listen<SmtpStatus>("smtp-status", (e) => cb(e.payload));

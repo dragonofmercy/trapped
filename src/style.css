@@ -3,3 +3,246 @@
 @import "@fontsource/inter/500.css";
 @import "@fontsource/inter/600.css";
 @import "@fontsource/orbitron/600.css";
+
+:root {
+  --bg0: #091629;
+  --bg1: #0c2340;
+  --bg2: #123a66;
+  --field: #0a1a2f;
+  --line: #1c3557;
+  --line2: #27486f;
+  --text: #e2e8f0;
+  --muted: #8da2bf;
+  --dim: #5d7391;
+  --accent: #3b82f6;
+  --accent-rgb: 59, 130, 246;
+  --accent-hi: #5b9bff;
+  --cyan: #22d3ee;
+  --cyan-rgb: 34, 211, 238;
+  --danger: #f87171;
+  --warn: #fbbf24;
+  --ok: #34d399;
+  --card-a: rgba(18, 38, 66, 0.78);
+  --card-b: rgba(11, 26, 47, 0.78);
+  --btn-bg: rgba(15, 32, 58, 0.9);
+  --btn-bg-hover: rgba(22, 44, 78, 0.95);
+  --dialog-bg: #0d1f38;
+  --danger-text: #fca5a5;
+  --warn-text: #fcd34d;
+  color-scheme: dark;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 13px;
+  color: var(--text);
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg0: #eef3fa;
+    --bg1: #e3ecf8;
+    --bg2: #cfe0f5;
+    --field: #ffffff;
+    --line: #c9d6e8;
+    --line2: #aebfd8;
+    --text: #1e293b;
+    --muted: #51637d;
+    --dim: #7488a3;
+    --accent: #2563eb;
+    --accent-rgb: 37, 99, 235;
+    --accent-hi: #3b82f6;
+    --cyan: #0891b2;
+    --cyan-rgb: 8, 145, 178;
+    --danger: #dc2626;
+    --warn: #b45309;
+    --ok: #059669;
+    --card-a: rgba(255, 255, 255, 0.85);
+    --card-b: rgba(244, 248, 253, 0.85);
+    --btn-bg: rgba(255, 255, 255, 0.9);
+    --btn-bg-hover: #ffffff;
+    --dialog-bg: #ffffff;
+    --danger-text: #b91c1c;
+    --warn-text: #92400e;
+    color-scheme: light;
+  }
+}
+
+@theme inline {
+  --color-bg0: var(--bg0);
+  --color-bg1: var(--bg1);
+  --color-bg2: var(--bg2);
+  --color-field: var(--field);
+  --color-line: var(--line);
+  --color-line2: var(--line2);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-dim: var(--dim);
+  --color-accent: var(--accent);
+  --color-accent-hi: var(--accent-hi);
+  --color-cyan: var(--cyan);
+  --color-danger: var(--danger);
+  --color-warn: var(--warn);
+  --color-ok: var(--ok);
+  --font-mono: ui-monospace, Consolas, monospace;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: radial-gradient(120% 90% at 85% 0%, var(--bg2) 0%, var(--bg1) 45%, var(--bg0) 100%);
+  overflow: hidden;
+}
+
+#app {
+  height: 100%;
+}
+
+/* Desktop app feel (modals included: the top layer does not inherit it): no text selection, except in fields and in text worth copying. */
+body,
+dialog {
+  user-select: none;
+  cursor: default;
+}
+
+input,
+.selectable {
+  user-select: text;
+}
+
+dialog {
+  background: var(--dialog-bg);
+  color: var(--text);
+  border: 1px solid var(--line2);
+  border-radius: 12px;
+  padding: 18px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+}
+
+dialog::backdrop {
+  background: rgba(0, 0, 0, 0.55);
+}
+
+dialog .buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+@layer components {
+  .label {
+    font-family: Orbitron, sans-serif;
+    font-weight: 600;
+    font-size: 11.5px;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--cyan);
+  }
+
+  .card {
+    position: relative;
+    background: linear-gradient(180deg, var(--card-a), var(--card-b));
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 14px 16px;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 34px;
+    padding: 0 14px;
+    border-radius: 8px;
+    border: 1px solid var(--line2);
+    background: var(--btn-bg);
+    color: var(--text);
+    font: 600 13px Inter, sans-serif;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+  }
+
+  .btn:hover:not(:disabled) {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.14);
+    background: var(--btn-bg-hover);
+  }
+
+  .btn:focus-visible {
+    outline: none;
+    border-color: var(--cyan);
+    box-shadow: 0 0 0 3px rgba(var(--cyan-rgb), 0.25);
+  }
+
+  .btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+
+  .btn.primary {
+    background: var(--accent);
+    border-color: var(--accent-hi);
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(var(--accent-rgb), 0.35);
+  }
+
+  .btn.primary:hover:not(:disabled) {
+    background: var(--accent-hi);
+    box-shadow: 0 4px 18px rgba(var(--accent-rgb), 0.5);
+  }
+
+  .btn.ghost {
+    background: transparent;
+    color: var(--muted);
+  }
+
+  .btn.ghost:hover:not(:disabled) {
+    background: rgba(127, 127, 127, 0.1);
+    color: var(--text);
+  }
+
+  .btn.warn {
+    color: var(--warn-text);
+    border-color: rgba(251, 191, 36, 0.35);
+    background: rgba(251, 191, 36, 0.1);
+  }
+
+  .btn.warn:hover:not(:disabled) {
+    border-color: var(--warn);
+    box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.14);
+    background: rgba(251, 191, 36, 0.18);
+  }
+
+  .btn.danger {
+    color: var(--danger-text);
+    border-color: rgba(248, 113, 113, 0.35);
+    background: rgba(220, 38, 38, 0.14);
+  }
+
+  .btn.danger:hover:not(:disabled) {
+    border-color: var(--danger);
+    box-shadow: 0 0 0 3px rgba(248, 113, 113, 0.14);
+    background: rgba(220, 38, 38, 0.24);
+  }
+
+  .field {
+    height: 34px;
+    padding: 0 12px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    background: var(--field);
+    color: var(--text);
+    font: 500 13px Inter, sans-serif;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+
+  .field:hover {
+    border-color: var(--line2);
+  }
+
+  .field:focus-visible {
+    outline: none;
+    border-color: var(--cyan);
+    box-shadow: 0 0 0 3px rgba(var(--cyan-rgb), 0.15);
+  }
+}
