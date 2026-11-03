@@ -35,34 +35,33 @@
   color: var(--text);
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    --bg0: #eef3fa;
-    --bg1: #e3ecf8;
-    --bg2: #cfe0f5;
-    --field: #ffffff;
-    --line: #c9d6e8;
-    --line2: #aebfd8;
-    --text: #1e293b;
-    --muted: #51637d;
-    --dim: #7488a3;
-    --accent: #2563eb;
-    --accent-rgb: 37, 99, 235;
-    --accent-hi: #3b82f6;
-    --cyan: #0891b2;
-    --cyan-rgb: 8, 145, 178;
-    --danger: #dc2626;
-    --warn: #b45309;
-    --ok: #059669;
-    --card-a: rgba(255, 255, 255, 0.85);
-    --card-b: rgba(244, 248, 253, 0.85);
-    --btn-bg: rgba(255, 255, 255, 0.9);
-    --btn-bg-hover: #ffffff;
-    --dialog-bg: #ffffff;
-    --danger-text: #b91c1c;
-    --warn-text: #92400e;
-    color-scheme: light;
-  }
+/* Set by src/theme.ts from the user choice or the system setting */
+:root[data-theme="light"] {
+  --bg0: #eef3fa;
+  --bg1: #e3ecf8;
+  --bg2: #cfe0f5;
+  --field: #ffffff;
+  --line: #c9d6e8;
+  --line2: #aebfd8;
+  --text: #1e293b;
+  --muted: #51637d;
+  --dim: #7488a3;
+  --accent: #2563eb;
+  --accent-rgb: 37, 99, 235;
+  --accent-hi: #3b82f6;
+  --cyan: #0891b2;
+  --cyan-rgb: 8, 145, 178;
+  --danger: #dc2626;
+  --warn: #b45309;
+  --ok: #059669;
+  --card-a: rgba(255, 255, 255, 0.85);
+  --card-b: rgba(244, 248, 253, 0.85);
+  --btn-bg: rgba(255, 255, 255, 0.9);
+  --btn-bg-hover: #ffffff;
+  --dialog-bg: #ffffff;
+  --danger-text: #b91c1c;
+  --warn-text: #92400e;
+  color-scheme: light;
 }
 
 @theme inline {

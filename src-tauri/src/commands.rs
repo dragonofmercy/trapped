@@ -143,6 +143,11 @@ pub async fn rename_inbox(db: State<'_, DbState>, inbox_id: i64, name: String) -
 }
 
 #[tauri::command]
+pub async fn create_inbox(db: State<'_, DbState>, name: String) -> Result<i64, String> {
+    db.lock().unwrap_or_else(|p| p.into_inner()).create_inbox(&name)
+}
+
+#[tauri::command]
 pub async fn delete_inbox(db: State<'_, DbState>, inbox_id: i64) -> Result<(), String> {
     db.lock().unwrap_or_else(|p| p.into_inner()).delete_inbox(inbox_id)
 }

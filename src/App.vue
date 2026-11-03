@@ -3,12 +3,14 @@ import { onBeforeUnmount, onMounted, ref } from "vue";
 import { listInboxes, onMailReceived, type Inbox } from "./api";
 import MailList from "./components/MailList.vue";
 import MailView from "./components/MailView.vue";
+import OptionsDialog from "./components/OptionsDialog.vue";
 import TopBar from "./components/TopBar.vue";
 
 const inboxes = ref<Inbox[]>([]);
 const currentInboxId = ref(0);
 const selectedMailId = ref<number | null>(null);
 const listKey = ref(0);
+const options = ref<InstanceType<typeof OptionsDialog>>();
 
 function select(id: number) {
   currentInboxId.value = id;
@@ -47,10 +49,11 @@ function listChanged(deletedIds: number[]) {
 
 <template>
   <div class="flex h-full flex-col gap-3 p-3">
-    <TopBar :inboxes="inboxes" :current-inbox-id="currentInboxId" @select="select" @changed="topChanged" />
+    <TopBar :inboxes="inboxes" :current-inbox-id="currentInboxId" @select="select" @changed="topChanged" @options="options?.open()" />
     <div class="grid min-h-0 flex-1 grid-cols-[360px_1fr] gap-3">
       <MailList :inbox-id="currentInboxId" :selected-id="selectedMailId" :refresh-key="listKey" @select="selectedMailId = $event" @changed="listChanged" />
       <MailView :mail-id="selectedMailId" @read="refresh" @deleted="selectedMailId = null; refresh()" />
     </div>
+    <OptionsDialog ref="options" :inboxes="inboxes" @changed="topChanged" />
   </div>
 </template>

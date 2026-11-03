@@ -1,12 +1,11 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
-import { deleteInbox, emptyInbox, renameInbox, smtpRetry, smtpStatus, onSmtpStatus, type Inbox, type SmtpStatus } from "../api";
+import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
+import { emptyInbox, smtpRetry, smtpStatus, onSmtpStatus, type Inbox, type SmtpStatus } from "../api";
 
 const props = defineProps<{ inboxes: Inbox[]; currentInboxId: number }>();
-const emit = defineEmits<{ select: [id: number]; changed: [selectId?: number] }>();
+const emit = defineEmits<{ select: [id: number]; changed: [selectId?: number]; options: [] }>();
 
 const current = computed(() => props.inboxes.find((i) => i.id === props.currentInboxId));
-const isDefault = computed(() => current.value?.name === "Default");
 
 const status = ref<SmtpStatus | null>(null);
 let unlisten: (() => void) | undefined;
@@ -32,62 +31,20 @@ async function retry() {
   }
 }
 
-// Rename (inline input)
-const renaming = ref(false);
-const newName = ref("");
-const renameError = ref("");
-const renameInput = ref<HTMLInputElement>();
 const actionError = ref("");
-// A pending rename or error belongs to the inbox it was started on
 watch(
   () => props.currentInboxId,
-  () => {
-    renaming.value = false;
-    renameError.value = "";
-    actionError.value = "";
-  },
+  () => (actionError.value = ""),
 );
-function cancelRename() {
-  renaming.value = false;
-  renameError.value = "";
-}
-async function startRename() {
-  newName.value = current.value?.name ?? "";
-  renameError.value = "";
-  actionError.value = "";
-  renaming.value = true;
-  await nextTick();
-  renameInput.value?.select();
-}
-async function confirmRename() {
-  try {
-    await renameInbox(props.currentInboxId, newName.value);
-    renaming.value = false;
-    emit("changed");
-  } catch (e) {
-    renameError.value = String(e);
-  }
-}
 
-// Confirm dialog for Empty / Delete
+// Confirm dialog for Empty
 const dlg = ref<HTMLDialogElement>();
-const pending = ref<"empty" | "delete" | null>(null);
-function ask(kind: "empty" | "delete") {
-  pending.value = kind;
-  dlg.value?.showModal();
-}
 async function confirm() {
-  const kind = pending.value;
   dlg.value?.close();
   actionError.value = "";
   try {
-    if (kind === "empty") {
-      await emptyInbox(props.currentInboxId);
-      emit("changed", props.currentInboxId);
-    } else if (kind === "delete") {
-      await deleteInbox(props.currentInboxId);
-      emit("changed", props.inboxes.find((i) => i.name === "Default")?.id);
-    }
+    await emptyInbox(props.currentInboxId);
+    emit("changed", props.currentInboxId);
   } catch (e) {
     actionError.value = String(e);
     emit("changed");
@@ -102,16 +59,8 @@ async function confirm() {
       <option v-for="i in inboxes" :key="i.id" :value="i.id">{{ i.name }} ({{ i.count }})</option>
     </select>
 
-    <template v-if="renaming">
-      <input ref="renameInput" v-model="newName" class="field" @input="renameError = ''" @keydown.enter="confirmRename" @keydown.esc="cancelRename" />
-      <span v-if="renameError" class="selectable text-danger">{{ renameError }}</span>
-    </template>
-    <template v-else>
-      <button class="btn" :disabled="isDefault" @click="startRename">Rename</button>
-      <button class="btn warn" :disabled="!current?.count" @click="ask('empty')">Empty</button>
-      <button v-if="!isDefault" class="btn danger" @click="ask('delete')">Delete</button>
-      <span v-if="actionError" class="selectable text-danger">{{ actionError }}</span>
-    </template>
+    <button class="btn warn" :disabled="!current?.count" @click="dlg?.showModal()">Empty</button>
+    <span v-if="actionError" class="selectable text-danger">{{ actionError }}</span>
 
     <div class="ml-auto flex items-center gap-2">
       <template v-if="status?.listening">
@@ -123,16 +72,14 @@ async function confirm() {
         <span class="selectable text-danger">{{ status.error ?? "SMTP server not running" }}</span>
         <button class="btn" :disabled="retrying" @click="retry">Retry</button>
       </template>
+      <button class="btn ghost" title="Options" @click="emit('options')">Options</button>
     </div>
 
     <dialog ref="dlg">
-      <p class="m-0">
-        <template v-if="pending === 'empty'">Delete all mails in "{{ current?.name }}"?</template>
-        <template v-else>Delete inbox "{{ current?.name }}" and all its mails?</template>
-      </p>
+      <p class="m-0">Delete all mails in "{{ current?.name }}"?</p>
       <div class="buttons">
         <button class="btn ghost" @click="dlg?.close()">Cancel</button>
-        <button class="btn danger" @click="confirm">{{ pending === "empty" ? "Empty" : "Delete" }}</button>
+        <button class="btn danger" @click="confirm">Empty</button>
       </div>
     </dialog>
   </div>

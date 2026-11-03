@@ -100,6 +100,7 @@ pub fn run() {
             commands::delete_mails,
             commands::empty_inbox,
             commands::rename_inbox,
+            commands::create_inbox,
             commands::delete_inbox,
             commands::smtp_status,
             commands::smtp_retry,

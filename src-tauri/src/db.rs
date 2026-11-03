@@ -194,6 +194,18 @@ impl Db {
         self.conn.execute("UPDATE inboxes SET name = ?1 WHERE id = ?2", params![name, inbox_id]).map(|_| ()).map_err(|e| e.to_string())
     }
 
+    pub fn create_inbox(&self, name: &str) -> Result<i64, String> {
+        let name = name.trim();
+        if name.is_empty() {
+            return Err("Inbox name cannot be empty".into());
+        }
+        let taken: bool = self.conn.query_row("SELECT EXISTS(SELECT 1 FROM inboxes WHERE name = ?1)", [name], |r| r.get(0)).map_err(|e| e.to_string())?;
+        if taken {
+            return Err("An inbox with this name already exists".into());
+        }
+        self.inbox_id(name).map_err(|e| e.to_string())
+    }
+
     pub fn delete_inbox(&self, inbox_id: i64) -> Result<(), String> {
         if self.is_default(inbox_id)? {
             return Err("The Default inbox cannot be deleted".into());
@@ -304,6 +316,16 @@ mod tests {
         assert_eq!(db.rename_inbox(x, "Y").unwrap_err(), "An inbox with this name already exists");
         db.rename_inbox(x, "Z").unwrap();
         assert!(db.list_inboxes().unwrap().iter().any(|i| i.name == "Z"));
+    }
+
+    #[test]
+    fn create_rules() {
+        let db = Db::open_in_memory().unwrap();
+        assert_eq!(db.create_inbox("  ").unwrap_err(), "Inbox name cannot be empty");
+        let x = db.create_inbox(" Shop ").unwrap();
+        assert_eq!(db.inbox_id("shop").unwrap(), x);
+        assert_eq!(db.create_inbox("SHOP").unwrap_err(), "An inbox with this name already exists");
+        assert_eq!(db.create_inbox("default").unwrap_err(), "An inbox with this name already exists");
     }
 
     #[test]

@@ -54,6 +54,7 @@ export const getRaw = (id: number) => invoke<string>("get_raw", { id });
 export const deleteMails = (ids: number[]) => invoke<void>("delete_mails", { ids });
 export const emptyInbox = (inboxId: number) => invoke<void>("empty_inbox", { inboxId });
 export const renameInbox = (inboxId: number, name: string) => invoke<void>("rename_inbox", { inboxId, name });
+export const createInbox = (name: string) => invoke<number>("create_inbox", { name });
 export const deleteInbox = (inboxId: number) => invoke<void>("delete_inbox", { inboxId });
 export const smtpStatus = () => invoke<SmtpStatus>("smtp_status");
 export const smtpRetry = () => invoke<SmtpStatus>("smtp_retry");
