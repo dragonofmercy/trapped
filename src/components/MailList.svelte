@@ -110,12 +110,12 @@
   <input bind:value={query} oninput={search} class="field w-full" type="search" placeholder="Search mails" />
 
   <!-- Same transparent left border as the rows, so the checkboxes line up -->
-  <div class="flex h-8 items-center gap-2 border-l-2 border-transparent px-2">
+  <div class="flex h-8 items-center gap-3 border-l-2 border-transparent px-2">
     <label class="chk">
       <input type="checkbox" bind:this={allBox} checked={allChecked} disabled={!rows.length} aria-label="Select all" onchange={toggleAll} />
       {@render check()}
     </label>
-    <span class="label">Mails</span>
+    <span class="label leading-none">Mails</span>
     {#if checked.length}
       <button type="button" class="btn danger ml-auto h-7" onclick={() => (confirmDelete = true)}><Icon name="trash" />Delete selection ({checked.length})</button>
     {/if}
@@ -132,7 +132,7 @@
         tabindex="0"
         aria-label={m.subject || "(no subject)"}
         aria-current={m.id === selectedId}
-        class={["flex cursor-pointer items-center gap-2 border-l-2 px-2 py-2 hover:bg-bg2/40", m.id === selectedId ? "border-accent bg-bg2/60" : "border-transparent"]}
+        class={["flex cursor-pointer items-center gap-3 border-l-2 px-2 py-2 hover:bg-bg2/40", m.id === selectedId ? "border-accent bg-bg2/60" : "border-transparent"]}
         onclick={() => onselect(m.id)}
         onkeydown={(e) => rowKey(e, m.id)}
       >
