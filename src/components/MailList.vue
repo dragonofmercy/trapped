@@ -9,6 +9,7 @@ const rows = ref<MailRow[]>([]);
 const checked = ref<number[]>([]);
 const query = ref("");
 const error = ref("");
+const deleteError = ref("");
 
 // Only the latest request may write rows (search typing and events can overlap)
 let seq = 0;
@@ -34,19 +35,25 @@ watch(
   () => props.inboxId,
   () => {
     checked.value = [];
+    deleteError.value = "";
+    clearTimeout(timer);
     load();
   },
 );
 watch(() => props.refreshKey, load);
 
 let unlisten: (() => void) | undefined;
+let unmounted = false;
 onMounted(async () => {
-  unlisten = await onMailReceived((id) => {
+  load();
+  const un = await onMailReceived((id) => {
     if (id === props.inboxId) load();
   });
-  load();
+  if (unmounted) un();
+  else unlisten = un;
 });
 onBeforeUnmount(() => {
+  unmounted = true;
   unlisten?.();
   clearTimeout(timer);
 });
@@ -69,15 +76,17 @@ const dlg = ref<HTMLDialogElement>();
 async function confirmDelete() {
   const ids = [...checked.value];
   dlg.value?.close();
+  deleteError.value = "";
+  let ok = false;
   try {
     await deleteMails(ids);
     checked.value = [];
-    error.value = "";
+    ok = true;
   } catch (e) {
-    error.value = String(e);
+    deleteError.value = String(e);
   }
   await load();
-  emit("changed", ids);
+  if (ok) emit("changed", ids);
 }
 </script>
 
@@ -90,18 +99,24 @@ async function confirmDelete() {
       <span class="label">Mails</span>
       <button v-if="checked.length" class="btn danger ml-auto h-7" @click="dlg?.showModal()">Delete selection ({{ checked.length }})</button>
     </div>
-    <div v-if="error" class="selectable text-danger">{{ error }}</div>
+    <div v-if="deleteError || error" class="selectable text-danger">{{ deleteError || error }}</div>
 
     <div class="min-h-0 flex-1 overflow-y-auto">
       <p v-if="!rows.length" class="m-0 p-4 text-center text-muted">{{ query ? "No mail matches." : "No mail yet. Send to 127.0.0.1:2525." }}</p>
       <div
         v-for="m in rows"
         :key="m.id"
+        role="button"
+        tabindex="0"
+        :aria-label="m.subject || '(no subject)'"
+        :aria-current="m.id === selectedId"
         class="flex cursor-pointer items-center gap-2 border-l-2 px-2 py-2 hover:bg-bg2/40"
         :class="m.id === selectedId ? 'border-accent bg-bg2/60' : 'border-transparent'"
         @click="emit('select', m.id)"
+        @keydown.enter.self.prevent="emit('select', m.id)"
+        @keydown.space.self.prevent="emit('select', m.id)"
       >
-        <input v-model="checked" type="checkbox" :value="m.id" aria-label="Select mail" @click.stop />
+        <input v-model="checked" type="checkbox" :value="m.id" aria-label="Select this mail" @click.stop />
         <div class="min-w-0 flex-1">
           <div class="truncate" :class="m.isRead ? 'text-muted' : 'font-bold text-text'">{{ m.subject || "(no subject)" }}</div>
           <div class="truncate text-muted">{{ m.from }}</div>
