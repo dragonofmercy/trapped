@@ -107,6 +107,8 @@ input,
 }
 
 dialog {
+  /* Tailwind preflight resets margins to 0, which removes the browser's centering of modals */
+  margin: auto;
   background: var(--dialog-bg);
   color: var(--text);
   border: 1px solid var(--line2);
