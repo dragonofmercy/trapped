@@ -136,6 +136,11 @@ impl Db {
         .collect()
     }
 
+    /// Raw message only; unlike `get_mail` it does not mark the mail as read.
+    pub fn get_raw(&self, id: i64) -> rusqlite::Result<Vec<u8>> {
+        self.conn.query_row("SELECT raw FROM raws WHERE mail_id = ?1", [id], |r| r.get(0))
+    }
+
     pub fn get_mail(&self, id: i64) -> rusqlite::Result<StoredMail> {
         self.conn.execute("UPDATE mails SET is_read = 1 WHERE id = ?1", [id])?;
         self.conn.query_row(
@@ -252,6 +257,15 @@ mod tests {
         assert_eq!(m.to, vec!["b@x.test".to_string()]);
         assert_eq!(db.list_inboxes().unwrap()[0].unread, 1);
         assert!(db.list_mails(inbox, "").unwrap()[0].is_read);
+    }
+
+    #[test]
+    fn get_raw_does_not_mark_read() {
+        let db = Db::open_in_memory().unwrap();
+        let inbox = db.inbox_id("").unwrap();
+        let id = db.insert_mail(inbox, &sum("s", "s"), b"rawbytes", 1).unwrap();
+        assert_eq!(db.get_raw(id).unwrap(), b"rawbytes");
+        assert_eq!(db.list_inboxes().unwrap()[0].unread, 1);
     }
 
     #[test]

@@ -25,14 +25,15 @@ fn show_main(app: &AppHandle) {
 }
 
 fn store(app: &AppHandle, r: smtp::Received) {
-    let db = app.state::<DbState>();
-    let db = db.lock().unwrap();
     let summary = parse::summarize(&r.raw, &r.rcpt_to);
+    let db = app.state::<DbState>();
+    let db = db.lock().unwrap_or_else(|p| p.into_inner());
     let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_or(0, |d| d.as_secs() as i64);
-    if let Ok(inbox_id) = db.inbox_id(&r.inbox)
-        && db.insert_mail(inbox_id, &summary, &r.raw, now).is_ok()
-    {
-        let _ = app.emit("mail-received", MailReceived { inbox_id });
+    match db.inbox_id(&r.inbox).and_then(|id| db.insert_mail(id, &summary, &r.raw, now).map(|_| id)) {
+        Ok(inbox_id) => {
+            let _ = app.emit("mail-received", MailReceived { inbox_id });
+        }
+        Err(err) => eprintln!("Failed to store received mail: {err}"),
     }
 }
 

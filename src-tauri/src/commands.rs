@@ -50,7 +50,8 @@ pub struct SmtpStatus {
 }
 
 pub fn is_blocked_extension(name: &str) -> bool {
-    name.rsplit_once('.').is_some_and(|(_, ext)| BLOCKED.contains(&ext.to_ascii_lowercase().as_str()))
+    // Windows drops trailing dots and spaces when creating files, so "x.exe." still ends up as x.exe
+    name.trim_end_matches(['.', ' ']).rsplit_once('.').is_some_and(|(_, ext)| BLOCKED.contains(&ext.to_ascii_lowercase().as_str()))
 }
 
 /// Binds the SMTP port; on success starts serving. Returns the resulting status.
@@ -78,17 +79,17 @@ fn e<T: ToString>(err: T) -> String {
 
 #[tauri::command]
 pub fn list_inboxes(db: State<DbState>) -> Result<Vec<InboxRow>, String> {
-    db.lock().unwrap().list_inboxes().map_err(e)
+    db.lock().unwrap_or_else(|p| p.into_inner()).list_inboxes().map_err(e)
 }
 
 #[tauri::command]
 pub fn list_mails(db: State<DbState>, inbox_id: i64, query: String) -> Result<Vec<MailRow>, String> {
-    db.lock().unwrap().list_mails(inbox_id, &query).map_err(e)
+    db.lock().unwrap_or_else(|p| p.into_inner()).list_mails(inbox_id, &query).map_err(e)
 }
 
 #[tauri::command]
-pub fn get_mail(db: State<DbState>, id: i64) -> Result<MailDetail, String> {
-    let m = db.lock().unwrap().get_mail(id).map_err(e)?;
+pub async fn get_mail(app: AppHandle, id: i64) -> Result<MailDetail, String> {
+    let m = app.state::<DbState>().lock().unwrap_or_else(|p| p.into_inner()).get_mail(id).map_err(e)?;
     let d = parse::detail(&m.raw);
     Ok(MailDetail {
         id: m.id,
@@ -120,62 +121,67 @@ pub fn get_mail(db: State<DbState>, id: i64) -> Result<MailDetail, String> {
 
 #[tauri::command]
 pub fn delete_mails(db: State<DbState>, ids: Vec<i64>) -> Result<(), String> {
-    db.lock().unwrap().delete_mails(&ids).map_err(e)
+    db.lock().unwrap_or_else(|p| p.into_inner()).delete_mails(&ids).map_err(e)
 }
 
 #[tauri::command]
 pub fn empty_inbox(db: State<DbState>, inbox_id: i64) -> Result<(), String> {
-    db.lock().unwrap().empty_inbox(inbox_id).map_err(e)
+    db.lock().unwrap_or_else(|p| p.into_inner()).empty_inbox(inbox_id).map_err(e)
 }
 
 #[tauri::command]
 pub fn rename_inbox(db: State<DbState>, inbox_id: i64, name: String) -> Result<(), String> {
-    db.lock().unwrap().rename_inbox(inbox_id, &name)
+    db.lock().unwrap_or_else(|p| p.into_inner()).rename_inbox(inbox_id, &name)
 }
 
 #[tauri::command]
 pub fn delete_inbox(db: State<DbState>, inbox_id: i64) -> Result<(), String> {
-    db.lock().unwrap().delete_inbox(inbox_id)
+    db.lock().unwrap_or_else(|p| p.into_inner()).delete_inbox(inbox_id)
 }
 
 #[tauri::command]
 pub fn smtp_status(status: State<StatusState>) -> SmtpStatus {
-    status.lock().unwrap().clone()
+    status.lock().unwrap_or_else(|p| p.into_inner()).clone()
 }
 
 #[tauri::command]
 pub async fn smtp_retry(app: AppHandle) -> Result<SmtpStatus, String> {
-    let current = app.state::<StatusState>().lock().unwrap().clone();
+    static RETRY: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
+    let _serial = RETRY.lock().await;
+    let current = app.state::<StatusState>().lock().unwrap_or_else(|p| p.into_inner()).clone();
     if current.listening {
         return Ok(current);
     }
     let status = start_smtp(app.state::<SmtpTx>().0.clone()).await;
-    *app.state::<StatusState>().lock().unwrap() = status.clone();
+    *app.state::<StatusState>().lock().unwrap_or_else(|p| p.into_inner()) = status.clone();
     let _ = app.emit("smtp-status", status.clone());
     Ok(status)
 }
 
 fn attachment_data(app: &AppHandle, mail_id: i64, index: usize) -> Result<parse::Attachment, String> {
-    let m = app.state::<DbState>().lock().unwrap().get_mail(mail_id).map_err(e)?;
-    parse::detail(&m.raw).attachments.into_iter().find(|a| a.index == index).ok_or_else(|| "Attachment not found".to_string())
+    let m = app.state::<DbState>().lock().unwrap_or_else(|p| p.into_inner()).get_raw(mail_id).map_err(e)?;
+    parse::detail(&m).attachments.into_iter().find(|a| a.index == index).ok_or_else(|| "Attachment not found".to_string())
 }
 
 #[tauri::command]
-pub fn open_attachment(app: AppHandle, mail_id: i64, index: usize) -> Result<(), String> {
+pub async fn open_attachment(app: AppHandle, mail_id: i64, index: usize) -> Result<(), String> {
     let a = attachment_data(&app, mail_id, index)?;
-    if is_blocked_extension(&a.name) {
-        return Err("This file type can only be saved".into());
-    }
     let dir = app.path().app_cache_dir().map_err(e)?.join("attachments");
     std::fs::create_dir_all(&dir).map_err(e)?;
     let safe: String = a.name.chars().map(|c| if matches!(c, '/' | '\\' | ':' | '*' | '?' | '"' | '<' | '>' | '|') { '_' } else { c }).collect();
+    let safe = safe.trim_end_matches(['.', ' ']);
+    let safe = if safe.is_empty() { "attachment" } else { safe };
+    // check the name that is actually written, not only the declared one
+    if is_blocked_extension(safe) || is_blocked_extension(&a.name) {
+        return Err("This file type can only be saved".into());
+    }
     let path = dir.join(format!("{mail_id}-{index}-{safe}"));
     std::fs::write(&path, &a.data).map_err(e)?;
     tauri_plugin_opener::OpenerExt::opener(&app).open_path(path.to_string_lossy(), None::<&str>).map_err(e)
 }
 
 #[tauri::command]
-pub fn save_attachment(app: AppHandle, mail_id: i64, index: usize, path: String) -> Result<(), String> {
+pub async fn save_attachment(app: AppHandle, mail_id: i64, index: usize, path: String) -> Result<(), String> {
     let a = attachment_data(&app, mail_id, index)?;
     std::fs::write(path, a.data).map_err(e)
 }
@@ -188,6 +194,9 @@ mod tests {
     fn blocked_extensions() {
         assert!(is_blocked_extension("setup.EXE"));
         assert!(is_blocked_extension("a.tar.ps1"));
+        assert!(is_blocked_extension("x.exe."));
+        assert!(is_blocked_extension("x.EXE "));
+        assert!(is_blocked_extension("x.exe. ."));
         assert!(!is_blocked_extension("invoice.pdf"));
         assert!(!is_blocked_extension("noext"));
     }
