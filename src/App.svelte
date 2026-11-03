@@ -20,7 +20,7 @@
   async function reload(selectId?: number) {
     inboxes = await listInboxes();
     if (selectId !== undefined) select(selectId);
-    else if (!inboxes.some((i) => i.id === currentInboxId)) select(inboxes[0].id);
+    else if (!inboxes.some((i) => i.id === currentInboxId)) select(inboxes[0]?.id ?? 0);
   }
 
   onMount(() => {

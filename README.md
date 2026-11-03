@@ -15,7 +15,7 @@ MAIL_ENCRYPTION=null
 
 ## Inboxes
 
-The SMTP AUTH username is the inbox name (any password is accepted). An inbox is created on its first mail. Mail sent without AUTH goes to the `Default` inbox. No TLS.
+The SMTP AUTH username is the inbox name (any password is accepted). An inbox is created on its first mail. The app starts with an `Inbox-Name` inbox; every inbox can be renamed or deleted from Options. Mail sent without AUTH goes to `Inbox-Name` (recreated if needed). No TLS.
 
 ## Development
 

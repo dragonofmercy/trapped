@@ -3,7 +3,8 @@ use rusqlite::{Connection, OptionalExtension, params};
 use serde::Serialize;
 use std::path::Path;
 
-pub const DEFAULT_INBOX: &str = "Default";
+/// Created on first launch, and used for mail sent without a username. A normal inbox otherwise.
+pub const DEFAULT_INBOX: &str = "Inbox-Name";
 
 #[derive(Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -53,7 +54,6 @@ CREATE TABLE IF NOT EXISTS mails (
 );
 CREATE TABLE IF NOT EXISTS raws (mail_id INTEGER PRIMARY KEY REFERENCES mails(id) ON DELETE CASCADE, raw BLOB NOT NULL);
 CREATE INDEX IF NOT EXISTS idx_mails_inbox ON mails(inbox_id, received_at);
-INSERT OR IGNORE INTO inboxes (name) VALUES ('Default');
 ";
 
 fn json_list(s: String) -> Vec<String> {
@@ -75,6 +75,12 @@ impl Db {
         // Returns the resulting mode ("memory" for in-memory DBs), so read it instead of using pragma_update.
         conn.query_row("PRAGMA journal_mode = WAL", [], |_| Ok(()))?;
         conn.execute_batch(SCHEMA)?;
+        // Seed the starter inbox on a fresh database only, so deleting every inbox sticks across restarts
+        let version: i64 = conn.query_row("PRAGMA user_version", [], |r| r.get(0))?;
+        if version == 0 {
+            conn.execute("INSERT INTO inboxes (name) SELECT ?1 WHERE NOT EXISTS (SELECT 1 FROM inboxes)", [DEFAULT_INBOX])?;
+            conn.pragma_update(None, "user_version", 1)?;
+        }
         Ok(Db { conn })
     }
 
@@ -106,7 +112,7 @@ impl Db {
     pub fn list_inboxes(&self) -> rusqlite::Result<Vec<InboxRow>> {
         let mut st = self
             .conn
-            .prepare("SELECT i.id, i.name, COUNT(m.id), COALESCE(SUM(1 - m.is_read), 0) FROM inboxes i LEFT JOIN mails m ON m.inbox_id = i.id GROUP BY i.id ORDER BY (i.name = 'Default') DESC, i.name ASC")?;
+            .prepare("SELECT i.id, i.name, COUNT(m.id), COALESCE(SUM(1 - m.is_read), 0) FROM inboxes i LEFT JOIN mails m ON m.inbox_id = i.id GROUP BY i.id ORDER BY i.name ASC")?;
         st.query_map([], |r| {
             Ok(InboxRow {
                 id: r.get(0)?,
@@ -174,15 +180,7 @@ impl Db {
         self.conn.execute("DELETE FROM mails WHERE inbox_id = ?1", [inbox_id]).map(|_| ())
     }
 
-    fn is_default(&self, inbox_id: i64) -> Result<bool, String> {
-        let name: Option<String> = self.conn.query_row("SELECT name FROM inboxes WHERE id = ?1", [inbox_id], |r| r.get(0)).optional().map_err(|e| e.to_string())?;
-        Ok(name.is_some_and(|n| n.eq_ignore_ascii_case(DEFAULT_INBOX)))
-    }
-
     pub fn rename_inbox(&self, inbox_id: i64, name: &str) -> Result<(), String> {
-        if self.is_default(inbox_id)? {
-            return Err("The Default inbox cannot be renamed".into());
-        }
         let name = name.trim();
         if name.is_empty() {
             return Err("Inbox name cannot be empty".into());
@@ -207,9 +205,6 @@ impl Db {
     }
 
     pub fn delete_inbox(&self, inbox_id: i64) -> Result<(), String> {
-        if self.is_default(inbox_id)? {
-            return Err("The Default inbox cannot be deleted".into());
-        }
         self.conn.execute("DELETE FROM inboxes WHERE id = ?1", [inbox_id]).map(|_| ()).map_err(|e| e.to_string())
     }
 }
@@ -232,27 +227,36 @@ mod tests {
     }
 
     #[test]
-    fn default_inbox_exists() {
-        let db = Db::open_in_memory().unwrap();
+    fn starter_inbox_seeded_once() {
+        let dir = std::env::temp_dir().join(format!("trapped-seed-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("t.db");
+        let _ = std::fs::remove_file(&path);
+        let db = Db::open(&path).unwrap();
         let l = db.list_inboxes().unwrap();
-        assert_eq!(l[0].name, "Default");
-        assert_eq!(l[0].count, 0);
+        assert_eq!(l.len(), 1);
+        assert_eq!(l[0].name, "Inbox-Name");
+        // Deleting every inbox must stick across a reopen
+        db.delete_inbox(l[0].id).unwrap();
+        drop(db);
+        assert!(Db::open(&path).unwrap().list_inboxes().unwrap().is_empty());
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]
     fn inbox_name_case_insensitive() {
         let db = Db::open_in_memory().unwrap();
-        assert_eq!(db.inbox_id("Inbox-Name").unwrap(), db.inbox_id(" inbox-name ").unwrap());
+        assert_eq!(db.inbox_id("Shop").unwrap(), db.inbox_id(" shop ").unwrap());
         let l = db.list_inboxes().unwrap();
         assert_eq!(l.len(), 2);
-        assert_eq!(l[1].name, "Inbox-Name");
+        assert_eq!(l[1].name, "Shop");
     }
 
     #[test]
     fn empty_name_is_default() {
         let db = Db::open_in_memory().unwrap();
-        assert_eq!(db.inbox_id("").unwrap(), db.inbox_id("Default").unwrap());
-        assert_eq!(db.inbox_id("  ").unwrap(), db.inbox_id("default").unwrap());
+        assert_eq!(db.inbox_id("").unwrap(), db.inbox_id("Inbox-Name").unwrap());
+        assert_eq!(db.inbox_id("  ").unwrap(), db.inbox_id("inbox-name").unwrap());
     }
 
     #[test]
@@ -311,7 +315,7 @@ mod tests {
         let def = db.inbox_id("").unwrap();
         let x = db.inbox_id("x").unwrap();
         db.inbox_id("y").unwrap();
-        assert_eq!(db.rename_inbox(def, "Q").unwrap_err(), "The Default inbox cannot be renamed");
+        db.rename_inbox(def, "Q").unwrap();
         assert_eq!(db.rename_inbox(x, " ").unwrap_err(), "Inbox name cannot be empty");
         assert_eq!(db.rename_inbox(x, "Y").unwrap_err(), "An inbox with this name already exists");
         db.rename_inbox(x, "Z").unwrap();
@@ -325,7 +329,7 @@ mod tests {
         let x = db.create_inbox(" Shop ").unwrap();
         assert_eq!(db.inbox_id("shop").unwrap(), x);
         assert_eq!(db.create_inbox("SHOP").unwrap_err(), "An inbox with this name already exists");
-        assert_eq!(db.create_inbox("default").unwrap_err(), "An inbox with this name already exists");
+        assert_eq!(db.create_inbox("inbox-name").unwrap_err(), "An inbox with this name already exists");
     }
 
     #[test]
@@ -337,7 +341,8 @@ mod tests {
         assert!(db.get_mail(m).is_err());
         let n: i64 = db.conn.query_row("SELECT COUNT(*) FROM raws", [], |r| r.get(0)).unwrap();
         assert_eq!(n, 0);
+        // The starter inbox is an ordinary inbox
         let def = db.inbox_id("").unwrap();
-        assert_eq!(db.delete_inbox(def).unwrap_err(), "The Default inbox cannot be deleted");
+        db.delete_inbox(def).unwrap();
     }
 }

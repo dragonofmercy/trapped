@@ -91,15 +91,14 @@
       {:else}
         {#if error}<p class="error selectable">{error}</p>{/if}
         <div class="min-h-0 flex-1 overflow-y-auto">
+          {#if !inboxes.length}<p class="m-0 py-4 text-muted">No inbox. One is created on the first mail sent with a new username.</p>{/if}
           {#each inboxes as i (i.id)}
             <div class="option">
-              <span class="text"><strong>{i.name}</strong><span>{i.count} {i.count === 1 ? "mail" : "mails"}{i.name === "Default" ? " - mail sent without a username" : ""}</span></span>
-              {#if i.name !== "Default"}
-                <div class="flex gap-2">
-                  <button type="button" class="btn" onclick={() => (naming = { inbox: i, error: "" })}><Icon name="pencil" />Rename</button>
-                  <button type="button" class="btn danger" onclick={() => (deleting = i)}><Icon name="trash" />Delete</button>
-                </div>
-              {/if}
+              <span class="text"><strong>{i.name}</strong><span>{i.count} {i.count === 1 ? "mail" : "mails"}</span></span>
+              <div class="flex gap-2">
+                <button type="button" class="btn" onclick={() => (naming = { inbox: i, error: "" })}><Icon name="pencil" />Rename</button>
+                <button type="button" class="btn danger" onclick={() => (deleting = i)}><Icon name="trash" />Delete</button>
+              </div>
             </div>
           {/each}
         </div>
