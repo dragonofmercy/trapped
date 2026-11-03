@@ -20,8 +20,8 @@ async function reload(selectId?: number) {
 
 let unlisten: (() => void) | undefined;
 onMounted(async () => {
-  await reload();
-  unlisten = await onMailReceived(() => reload());
+  unlisten = await onMailReceived(() => reload().catch(() => {}));
+  await reload().catch(() => {});
 });
 onBeforeUnmount(() => unlisten?.());
 </script>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import { deleteInbox, emptyInbox, renameInbox, smtpRetry, smtpStatus, onSmtpStatus, type Inbox, type SmtpStatus } from "../api";
 
 const props = defineProps<{ inboxes: Inbox[]; currentInboxId: number }>();
@@ -12,7 +12,11 @@ const status = ref<SmtpStatus | null>(null);
 let unlisten: (() => void) | undefined;
 onMounted(async () => {
   unlisten = await onSmtpStatus((s) => (status.value = s));
-  status.value = await smtpStatus();
+  try {
+    status.value = await smtpStatus();
+  } catch (e) {
+    status.value = { listening: false, address: "", error: String(e) };
+  }
 });
 onBeforeUnmount(() => unlisten?.());
 
@@ -21,6 +25,8 @@ async function retry() {
   retrying.value = true;
   try {
     status.value = await smtpRetry();
+  } catch (e) {
+    status.value = { listening: false, address: "", error: String(e) };
   } finally {
     retrying.value = false;
   }
@@ -31,9 +37,24 @@ const renaming = ref(false);
 const newName = ref("");
 const renameError = ref("");
 const renameInput = ref<HTMLInputElement>();
+const actionError = ref("");
+// A pending rename or error belongs to the inbox it was started on
+watch(
+  () => props.currentInboxId,
+  () => {
+    renaming.value = false;
+    renameError.value = "";
+    actionError.value = "";
+  },
+);
+function cancelRename() {
+  renaming.value = false;
+  renameError.value = "";
+}
 async function startRename() {
   newName.value = current.value?.name ?? "";
   renameError.value = "";
+  actionError.value = "";
   renaming.value = true;
   await nextTick();
   renameInput.value?.select();
@@ -58,12 +79,18 @@ function ask(kind: "empty" | "delete") {
 async function confirm() {
   const kind = pending.value;
   dlg.value?.close();
-  if (kind === "empty") {
-    await emptyInbox(props.currentInboxId);
+  actionError.value = "";
+  try {
+    if (kind === "empty") {
+      await emptyInbox(props.currentInboxId);
+      emit("changed", props.currentInboxId);
+    } else if (kind === "delete") {
+      await deleteInbox(props.currentInboxId);
+      emit("changed", props.inboxes.find((i) => i.name === "Default")?.id);
+    }
+  } catch (e) {
+    actionError.value = String(e);
     emit("changed");
-  } else if (kind === "delete") {
-    await deleteInbox(props.currentInboxId);
-    emit("changed", props.inboxes.find((i) => i.name === "Default")?.id);
   }
 }
 </script>
@@ -76,13 +103,14 @@ async function confirm() {
     </select>
 
     <template v-if="renaming">
-      <input ref="renameInput" v-model="newName" class="field" @keydown.enter="confirmRename" @keydown.esc="renaming = false" />
+      <input ref="renameInput" v-model="newName" class="field" @input="renameError = ''" @keydown.enter="confirmRename" @keydown.esc="cancelRename" />
       <span v-if="renameError" class="selectable text-danger">{{ renameError }}</span>
     </template>
     <template v-else>
       <button class="btn" :disabled="isDefault" @click="startRename">Rename</button>
-      <button class="btn warn" @click="ask('empty')">Empty</button>
+      <button class="btn warn" :disabled="!current?.count" @click="ask('empty')">Empty</button>
       <button v-if="!isDefault" class="btn danger" @click="ask('delete')">Delete</button>
+      <span v-if="actionError" class="selectable text-danger">{{ actionError }}</span>
     </template>
 
     <div class="ml-auto flex items-center gap-2">
