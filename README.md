@@ -1,7 +1,26 @@
-# Tauri + Vue + TypeScript
+# Trapped
 
-This template should help get you started developing with Vue 3 and TypeScript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+Desktop mail catcher (Tauri 2 + Vue 3). It listens for SMTP on `127.0.0.1:2525`, accepts every message, never relays, and shows what it caught. Closing the window hides it to the tray.
 
-## Recommended IDE Setup
+## Laravel setup
 
-- [VS Code](https://code.visualstudio.com/) + [Vue - Official](https://marketplace.visualstudio.com/items?itemName=Vue.volar) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
+```
+MAIL_MAILER=smtp
+MAIL_HOST=127.0.0.1
+MAIL_PORT=2525
+MAIL_USERNAME=Inbox-Name
+MAIL_PASSWORD=null
+MAIL_ENCRYPTION=null
+```
+
+## Inboxes
+
+The SMTP AUTH username is the inbox name (any password is accepted). An inbox is created on its first mail. Mail sent without AUTH goes to the `Default` inbox. No TLS.
+
+## Development
+
+```
+npm install
+npm run tauri dev
+npm run tauri build
+```
