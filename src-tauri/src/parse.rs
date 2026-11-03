@@ -1,5 +1,5 @@
 use base64::Engine;
-use mail_parser::{Addr, Address, Message, MessageParser, MimeHeaders, PartType};
+use mail_parser::{AddressList, Message, MessageParser, MessagePart, PartKind};
 
 pub struct Summary {
     pub subject: String,
@@ -27,37 +27,41 @@ pub struct Detail {
     pub attachments: Vec<Attachment>,
 }
 
-fn emails(addr: Option<&Address>) -> Vec<String> {
-    addr.map(|a| a.iter().filter_map(|x: &Addr| x.address.as_deref()).map(str::to_string).collect()).unwrap_or_default()
+fn emails(addr: Option<AddressList>) -> Vec<String> {
+    addr.map(|a| a.mailboxes().filter_map(|x| x.address()).map(str::to_string).collect()).unwrap_or_default()
 }
 
-fn names(addr: Option<&Address>) -> Vec<String> {
-    addr.map(|a| a.iter().filter_map(|x: &Addr| x.name.as_deref()).map(str::to_string).collect()).unwrap_or_default()
+fn names(addr: Option<AddressList>) -> Vec<String> {
+    addr.map(|a| a.mailboxes().filter_map(|x| x.name()).map(str::to_string).collect()).unwrap_or_default()
 }
 
 /// First text/plain body part only (no html-to-text fallback).
 fn text_body(msg: &Message) -> Option<String> {
-    match &msg.text_part(0)?.body {
-        PartType::Text(t) => Some(t.to_string()),
-        _ => None,
-    }
+    msg.text_body().next().filter(|p| matches!(p.kind(), PartKind::Text)).and_then(|p| p.text()).map(|t| t.into_owned())
 }
 
 /// First text/html body part only (no text-to-html fallback).
 fn html_body(msg: &Message) -> Option<String> {
-    match &msg.html_part(0)?.body {
-        PartType::Html(h) => Some(h.to_string()),
-        _ => None,
-    }
+    msg.html_body().next().filter(|p| matches!(p.kind(), PartKind::Html)).and_then(|p| p.text()).map(|t| t.into_owned())
 }
 
 /// A part counts as an attachment when it has a filename or an explicit attachment disposition.
-fn is_listed(part: &mail_parser::MessagePart) -> bool {
+fn is_listed(part: &MessagePart) -> bool {
     if part.content_disposition().is_some_and(|d| d.is_attachment()) {
         return true;
     }
     // An inline image referenced by cid is not a user-facing attachment even when it carries a filename.
     part.attachment_name().is_some() && part.content_id().is_none()
+}
+
+fn to_attachment(part: &MessagePart) -> Attachment {
+    Attachment {
+        index: 0,
+        name: part.attachment_name().unwrap_or("attachment").to_string(),
+        mime: part.content_type().map(|c| format!("{}/{}", c.ctype(), c.subtype().unwrap_or("octet-stream"))).unwrap_or_else(|| "application/octet-stream".to_string()),
+        content_id: part.content_id().map(|c| c.trim_matches(|ch| ch == '<' || ch == '>').to_string()),
+        data: part.decoded().into_owned(),
+    }
 }
 
 pub fn summarize(raw: &[u8], rcpt_to: &[String]) -> Summary {
@@ -68,7 +72,7 @@ pub fn summarize(raw: &[u8], rcpt_to: &[String]) -> Summary {
     let to = msg.map(|m| emails(m.to())).unwrap_or_default();
     let cc = msg.map(|m| emails(m.cc())).unwrap_or_default();
     let bcc: Vec<String> = rcpt_to.iter().filter(|r| !to.iter().chain(cc.iter()).any(|h| h.eq_ignore_ascii_case(r))).cloned().collect();
-    let has_attachments = msg.is_some_and(|m| m.attachments().any(is_listed));
+    let has_attachments = msg.is_some_and(|m| m.attachments().any(|p| is_listed(&p)));
     let text = msg.and_then(text_body).unwrap_or_default();
     let html = msg.and_then(html_body).map(|h| strip_html(&h)).unwrap_or_default();
     let mut parts = vec![subject.clone(), from.clone()];
@@ -100,27 +104,15 @@ pub fn detail(raw: &[u8]) -> Detail {
             attachments: vec![],
         };
     };
-    // Inline cid parts are needed for substitution but are not listed to the user.
-    let mut all = Vec::new();
-    let mut flags = Vec::new();
-    for part in msg.attachments() {
-        let mime = part.content_type().map(|c| format!("{}/{}", c.ctype(), c.subtype().unwrap_or("octet-stream"))).unwrap_or_else(|| "application/octet-stream".to_string());
-        flags.push(is_listed(part));
-        all.push(Attachment {
-            index: 0,
-            name: part.attachment_name().unwrap_or("attachment").to_string(),
-            mime,
-            content_id: part.content_id().map(|c| c.trim_matches(|ch| ch == '<' || ch == '>').to_string()),
-            data: part.contents().to_vec(),
-        });
-    }
-    let html = html_body(&msg).map(|h| inline_cids(&h, &all));
+    // Inline cid parts can sit in the body lists (multipart/related), so they are looked up across all parts.
+    let cids: Vec<Attachment> = msg.parts().filter(|p| p.content_id().is_some() && matches!(p.kind(), PartKind::Binary | PartKind::InlineBinary)).map(|p| to_attachment(&p)).collect();
+    let html = html_body(&msg).map(|h| inline_cids(&h, &cids));
     Detail {
         date: msg.date().map(|d| d.to_rfc3339()),
         html,
         text: text_body(&msg),
-        headers: msg.headers_raw().map(|(k, v)| (k.to_string(), v.trim().to_string())).collect(),
-        attachments: all.into_iter().zip(flags).filter(|(_, l)| *l).enumerate().map(|(i, (a, _))| Attachment { index: i, ..a }).collect(),
+        headers: msg.headers().iter().map(|h| (h.raw_name().to_string(), String::from_utf8_lossy(h.raw_value()).trim().to_string())).collect(),
+        attachments: msg.attachments().filter(is_listed).enumerate().map(|(i, p)| Attachment { index: i, ..to_attachment(&p) }).collect(),
     }
 }
 
