@@ -12,7 +12,7 @@
 <dialog bind:this={dialog} style:width="calc(var(--spacing) * {width})" oncancel={(e) => (e.preventDefault(), onclose())}>
   <header>
     <h2>{title}</h2>
-    <button type="button" class="btn ghost close" title="Close" aria-label="Close" onclick={onclose}><Icon name="close" /></button>
+    <button type="button" class="btn bare close" title="Close" aria-label="Close" onclick={onclose}><Icon name="close" /></button>
   </header>
   <div class="body">{@render children()}</div>
 </dialog>
@@ -37,7 +37,6 @@
     width: calc(var(--spacing) * 8.5);
     padding: 0;
     justify-content: center;
-    border-color: transparent;
   }
   .body {
     padding: calc(var(--spacing) * 4.5);

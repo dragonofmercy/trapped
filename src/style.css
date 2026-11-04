@@ -396,6 +396,20 @@ dialog .buttons {
     color: var(--text);
   }
 
+  /* Bare icon button: no background or border, hover only brightens the icon (focus ring kept for the keyboard) */
+  .btn.bare {
+    border-color: transparent;
+    background: transparent;
+    color: var(--muted);
+  }
+
+  .btn.bare:hover:not(:disabled) {
+    border-color: transparent;
+    background: transparent;
+    box-shadow: none;
+    color: var(--text);
+  }
+
   .btn.warn {
     color: var(--warn-text);
     border-color: rgba(251, 191, 36, 0.35);

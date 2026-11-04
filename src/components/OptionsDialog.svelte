@@ -99,7 +99,7 @@ MAIL_ENCRYPTION=null`);
       <p>Laravel <code>.env</code>:</p>
       <div class="relative">
         <pre class="selectable">{env}</pre>
-        <button type="button" class="btn ghost copy" data-tip={copied ? "Copied" : "Copy"} aria-label="Copy configuration" onclick={copyEnv}><Icon name={copied ? "check" : "copy"} /></button>
+        <button type="button" class="btn bare copy" data-tip={copied ? "Copied" : "Copy"} aria-label="Copy configuration" onclick={copyEnv}><Icon name={copied ? "check" : "copy"} /></button>
       </div>
     </div>
     <div class="buttons">
@@ -169,14 +169,6 @@ MAIL_ENCRYPTION=null`);
     height: calc(var(--spacing) * 8);
     padding: 0;
     justify-content: center;
-    border-color: transparent;
-  }
-  /* Bare icon: hover only brightens it, no background, border or ring */
-  .copy:hover:not(:disabled) {
-    background: transparent;
-    border-color: transparent;
-    box-shadow: none;
-    color: var(--text);
   }
   .error {
     margin: 0;
