@@ -1,11 +1,11 @@
 <script lang="ts" module>
-  import { ChevronDown, Download, ExternalLink, Inbox, Monitor, Paperclip, Pencil, Plus, RotateCcw, Search, Settings, Smartphone, Trash2, X } from "@lucide/svelte";
+  import { ChevronDown, Download, ExternalLink, Inbox, Monitor, Paperclip, Pencil, Plus, RotateCcw, Search, Settings, Smartphone, Trash, X } from "@lucide/svelte";
 
   // Lucide icons by short name, so call sites stay one-liners with a shared size and stroke
   const ICONS = {
     plus: Plus,
     pencil: Pencil,
-    trash: Trash2,
+    trash: Trash,
     reset: RotateCcw,
     close: X,
     download: Download,
