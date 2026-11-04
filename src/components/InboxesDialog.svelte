@@ -73,7 +73,7 @@
     </div>
     {#if error}<p class="error selectable">{error}</p>{/if}
 
-    <div class="mt-3 flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
+    <div class="list mt-3 min-h-0 flex-1 overflow-y-auto">
       {#if !inboxes.length}
         <p class="m-0 py-4 text-center text-muted">No inbox. One is created on the first mail sent with a new username.</p>
       {:else if !shown.length}
@@ -152,17 +152,20 @@
     color: var(--text);
     font: inherit;
   }
-  /* One card per inbox, accent bar on the left */
+  /* One card holding the list, rows separated by a border */
+  .list {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: linear-gradient(180deg, var(--card-a), var(--card-b));
+  }
   .item {
     display: flex;
     align-items: center;
     gap: 12px;
-    flex-shrink: 0;
     padding: 10px 12px;
-    border: 1px solid var(--line);
-    border-left: 3px solid var(--accent);
-    border-radius: 10px;
-    background: linear-gradient(180deg, var(--card-a), var(--card-b));
+  }
+  .item + .item {
+    border-top: 1px solid var(--line);
   }
   .tile {
     display: flex;
