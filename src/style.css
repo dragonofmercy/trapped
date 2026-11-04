@@ -243,6 +243,36 @@ dialog .buttons {
   box-shadow: 0 0 0 3px rgba(var(--cyan-rgb), 0.3);
 }
 
+/* Tooltip: <button data-tip="Text">, shown below the element after a short hover */
+[data-tip] {
+  position: relative;
+}
+
+[data-tip]:hover::after {
+  content: attr(data-tip);
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + --spacing(1.5));
+  left: 50%;
+  translate: -50% 0;
+  padding: --spacing(1) --spacing(2);
+  border: 1px solid var(--line2);
+  border-radius: var(--radius-md);
+  background: var(--dialog-bg);
+  color: var(--text);
+  font: 500 var(--text-xs) system-ui, sans-serif;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45);
+  animation: tip-in 0.15s 0.4s both;
+}
+
+@keyframes tip-in {
+  from {
+    opacity: 0;
+  }
+}
+
 .chk.radio .box {
   border-radius: 50%;
 }

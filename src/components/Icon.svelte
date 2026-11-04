@@ -1,5 +1,5 @@
 <script lang="ts" module>
-  import { ChevronDown, Download, ExternalLink, Inbox, Monitor, Paperclip, Pencil, Plus, RotateCcw, Search, Settings, Smartphone, Trash, X } from "@lucide/svelte";
+  import { ChevronDown, Download, ExternalLink, Inbox, MailPen, Monitor, Paperclip, Pencil, Plus, RotateCcw, Search, Smartphone, Trash, X } from "@lucide/svelte";
 
   // Lucide icons by short name, so call sites stay one-liners with a shared size and stroke
   const ICONS = {
@@ -11,12 +11,12 @@
     download: Download,
     chevron: ChevronDown,
     external: ExternalLink,
-    gear: Settings,
     search: Search,
     inbox: Inbox,
     clip: Paperclip,
     monitor: Monitor,
     phone: Smartphone,
+    mailpen: MailPen,
   };
 
   export type IconName = keyof typeof ICONS;
