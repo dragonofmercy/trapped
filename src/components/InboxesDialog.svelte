@@ -1,14 +1,11 @@
 <script lang="ts">
-  import { onMount } from "svelte";
   import { createInbox, deleteInbox, renameInbox, type Inbox } from "../api";
   import ConfirmDialog from "./ConfirmDialog.svelte";
   import Icon from "./Icon.svelte";
+  import Modal from "./Modal.svelte";
   import NameDialog from "./NameDialog.svelte";
 
   let { inboxes, onchanged, onclose }: { inboxes: Inbox[]; onchanged: (selectId?: number) => void; onclose: () => void } = $props();
-
-  let dialog: HTMLDialogElement;
-  onMount(() => dialog.showModal());
 
   // Name dialog for New and Rename; inbox = null means New
   type Naming = { inbox: Inbox | null; error: string };
@@ -56,13 +53,8 @@
   }
 </script>
 
-<dialog bind:this={dialog} oncancel={(e) => (e.preventDefault(), onclose())}>
-  <div class="flex h-[440px] flex-col">
-    <div class="page flex items-center gap-2">
-      <h2 class="m-0 mr-auto">Inboxes</h2>
-      <button type="button" class="btn ghost square" title="Close" aria-label="Close" onclick={onclose}><Icon name="close" /></button>
-    </div>
-
+<Modal title="Inboxes" width={600} {onclose}>
+  <div class="flex h-[400px] flex-col">
     <!-- Search on the left, add on the right (Definitive Mod Manager layout) -->
     <div class="flex items-center gap-2">
       <label class="field search">
@@ -92,7 +84,7 @@
       {/each}
     </div>
   </div>
-</dialog>
+</Modal>
 
 {#if naming}
   {@const n = naming}
@@ -117,17 +109,10 @@
 {/if}
 
 <style>
-  .page {
-    height: 34px;
-    margin-bottom: 10px;
-  }
   .square {
     width: 34px;
     padding: 0;
     justify-content: center;
-  }
-  .page .square {
-    border-color: transparent;
   }
   .search {
     flex: 1;
@@ -201,9 +186,5 @@
   .sep {
     display: inline-block;
     width: 14px;
-  }
-  dialog {
-    width: 600px;
-    max-width: 90vw;
   }
 </style>
