@@ -2,7 +2,7 @@
 
 All notable changes to Trapped are listed here. The format follows [Keep a Changelog](https://keepachangelog.com) and versions follow [Semantic Versioning](https://semver.org).
 
-## [Unreleased]
+## [1.0.0] - 2026-11-04
 
 - Catches every mail your apps send to `127.0.0.1:2525`, nothing is ever delivered
 - One inbox per SMTP username, created on its first mail
