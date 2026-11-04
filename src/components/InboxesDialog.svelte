@@ -54,7 +54,7 @@
 </script>
 
 <Modal title="Inboxes" width={150} {onclose}>
-  <div class="flex h-[calc(var(--spacing) * 100)] flex-col">
+  <div class="flex h-100 flex-col">
     <!-- Search on the left, add on the right (Definitive Mod Manager layout) -->
     <div class="flex items-center gap-2">
       <label class="field search">
