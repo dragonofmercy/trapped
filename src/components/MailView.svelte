@@ -65,13 +65,13 @@
     });
   });
 
-  // HTML and Text only show when the mail has that part
+  // HTML, Text and Attachments only show when the mail has content for them
   const tabs = $derived<{ id: Tab; label: string }[]>([
     ...(mail?.html ? [{ id: "html" as const, label: "HTML" }] : []),
     ...(mail?.text ? [{ id: "text" as const, label: "Text" }] : []),
     { id: "source", label: "Source" },
     { id: "headers", label: "Headers" },
-    { id: "attachments", label: `Attachments (${mail?.attachments.length ?? 0})` },
+    ...(mail?.attachments.length ? [{ id: "attachments" as const, label: `Attachments (${mail.attachments.length})` }] : []),
   ]);
 
   const dateText = $derived.by(() => {
@@ -189,9 +189,6 @@
           </tbody>
         </table>
       {:else}
-        {#if !m.attachments.length}
-          <p class="p-4 text-center text-muted">No attachments.</p>
-        {/if}
         {#each m.attachments as a (a.index)}
           <div class="flex items-center gap-3 border-b border-line py-2">
             <div class="min-w-0 flex-1">
