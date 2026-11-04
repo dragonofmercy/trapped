@@ -99,7 +99,6 @@ dialog .buttons {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
-  margin-top: 18px;
 }
 
 /* Checkbox, radio: <label class="chk"><input type="..."><span class="box"><svg/></span>Text</label> */
