@@ -137,7 +137,7 @@
         tabindex="0"
         aria-label={m.subject || "(no subject)"}
         aria-current={m.id === selectedId}
-        class={["flex cursor-pointer items-center gap-3 border-l-2 px-2 py-2 hover:bg-bg2/40", m.id === selectedId ? "border-accent bg-bg2/60" : "border-transparent"]}
+        class={["flex cursor-pointer items-center gap-3 rounded-md border-l-2 px-2 py-2 hover:bg-bg2/40", m.id === selectedId ? "border-accent bg-bg2/60" : "border-transparent"]}
         onclick={() => open(m.id)}
         onkeydown={(e) => rowKey(e, m.id)}
       >
