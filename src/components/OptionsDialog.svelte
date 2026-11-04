@@ -4,6 +4,7 @@
   import Icon from "./Icon.svelte";
   import Modal from "./Modal.svelte";
   import ModalFooter from "./ModalFooter.svelte";
+  import Select from "./Select.svelte";
 
   let { onclose }: { onclose: () => void } = $props();
 
@@ -12,8 +13,8 @@
   let saved = $state<number | null>(null);
   let host = $state<SmtpHost>("127.0.0.1");
   const HOSTS: { value: SmtpHost; label: string }[] = [
-    { value: "127.0.0.1", label: "This machine" },
-    { value: "0.0.0.0", label: "All interfaces" },
+    { value: "127.0.0.1", label: "127.0.0.1 (this machine)" },
+    { value: "0.0.0.0", label: "0.0.0.0 (all interfaces)" },
   ];
   let error = $state("");
   let saving = $state(false);
@@ -102,13 +103,9 @@ MAIL_ENCRYPTION=null`);
       <div class="option">
         <span class="text">
           <strong>Listen address</strong>
-          <span>{host === "0.0.0.0" ? "0.0.0.0: any machine on the network can send mail to Trapped. Windows may ask to allow it through the firewall." : "127.0.0.1: only programs on this machine can send mail to Trapped."}</span>
+          <span>All interfaces lets other machines on the network send mail to Trapped. Windows may ask to allow it through the firewall.</span>
         </span>
-        <div class="seg" style="--n: 2; --i: {HOSTS.findIndex((h) => h.value === host)}">
-          {#each HOSTS as h (h.value)}
-            <button type="button" aria-pressed={host === h.value} onclick={() => ((host = h.value), (error = ""))}>{h.label}</button>
-          {/each}
-        </div>
+        <div class="w-60 shrink-0"><Select label="Listen address" bind:value={() => host, (v) => ((host = v), (error = ""))} options={HOSTS} /></div>
       </div>
     </div>
     <!-- Setup help -->
