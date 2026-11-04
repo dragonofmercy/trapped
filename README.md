@@ -9,6 +9,8 @@
 
 A local SMTP mail catcher for Windows, for developers who need to see what their app sends.
 
+![Trapped](.github/screenshot.webp)
+
 Trapped listens on `127.0.0.1:2525`, accepts every message, never relays anything, and shows what it caught like a webmail: the HTML rendering, the text version, the raw source, the headers and the attachments. Point your app's mail settings at it, send, and click the links in the mail (email verification, password reset, 2FA).
 
 ## Features
