@@ -76,6 +76,17 @@
       </label>
       {#if invalid || error}<p class="error selectable">{invalid || error}</p>{/if}
     </div>
+    <!-- Setup help: the snippet follows the port being typed while it is valid -->
+    <div class="help space-y-2">
+      <p>Mails are grouped by SMTP username: pick any name, Trapped creates the inbox on the first mail it receives.</p>
+      <p>Laravel <code>.env</code>:</p>
+      <pre class="selectable">MAIL_MAILER=smtp
+MAIL_HOST=127.0.0.1
+MAIL_PORT={invalid === null && port !== null ? port : 2525}
+MAIL_USERNAME=Inbox-Name
+MAIL_PASSWORD=null
+MAIL_ENCRYPTION=null</pre>
+    </div>
     <div class="buttons">
       <button type="button" class="btn ghost" onclick={onclose}>Cancel</button>
       <button type="submit" class="btn" disabled={saving || invalid !== null || port === null || busy}>Save</button>
@@ -113,6 +124,25 @@
   }
   input {
     appearance: textfield;
+  }
+  .help {
+    color: var(--muted);
+  }
+  .help code,
+  .help pre {
+    font-family: var(--font-mono);
+    color: var(--text);
+    background: var(--field);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+  }
+  .help code {
+    padding: 0 var(--spacing);
+  }
+  .help pre {
+    margin: 0;
+    padding: calc(var(--spacing) * 3) calc(var(--spacing) * 4);
+    line-height: 1.6;
   }
   .error {
     margin: 0;
