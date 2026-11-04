@@ -1,4 +1,5 @@
 <script lang="ts">
+  import NoSelection from "./NoSelection.svelte";
   import { untrack } from "svelte";
   import { openUrl } from "@tauri-apps/plugin-opener";
   import { save } from "@tauri-apps/plugin-dialog";
@@ -128,7 +129,7 @@
   {#if error}
     <p class="selectable m-auto text-danger">{error}</p>
   {:else if !mail}
-    <p class="m-auto text-muted">Select a mail</p>
+    <NoSelection />
   {:else}
     {@const m = mail}
     <div class="flex items-start gap-3">
