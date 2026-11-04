@@ -6,6 +6,7 @@
   let { onclose }: { onclose: () => void } = $props();
 
   // Number input: bind:value gives null while the field is empty
+  let port = $state<number | null>(null);
   let error = $state("");
   let saving = $state(false);
   onMount(() => {
@@ -15,7 +16,6 @@
     );
   });
 
-  let port = $state<number | null>(null);
   const invalid = $derived(port !== null && !(Number.isInteger(port) && port >= 1 && port <= 65535) ? "Port must be a number between 1 and 65535" : null);
 
   async function submit(e: SubmitEvent) {
