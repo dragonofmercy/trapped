@@ -39,6 +39,7 @@ export interface MailDetail {
   text: string | null;
   headers: [string, string][];
   attachments: AttachmentInfo[];
+  wasUnread: boolean;
 }
 
 export interface SmtpStatus {

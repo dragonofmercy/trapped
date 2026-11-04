@@ -31,8 +31,15 @@
 
   onMount(() => {
     reload();
-    return subscribe(onMailReceived(() => reload()));
+    return subscribe(onMailReceived(reloadSoon));
   });
+
+  // A burst of incoming mails (a test suite) reloads the inbox counts once
+  let reloadTimer: ReturnType<typeof setTimeout> | undefined;
+  function reloadSoon() {
+    clearTimeout(reloadTimer);
+    reloadTimer = setTimeout(reload, 150);
+  }
 
   function refresh() {
     listKey++;
@@ -57,7 +64,7 @@
     <MailList inboxId={currentInboxId} selectedId={selectedMailId} refreshKey={listKey} onselect={(id) => (selectedMailId = id)} onchanged={listChanged} />
     <MailView
       mailId={selectedMailId}
-      onread={refresh}
+      onread={() => reload()}
       ondeleted={() => {
         selectedMailId = null;
         refresh();

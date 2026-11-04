@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { onMount } from "svelte";
-  import { onSmtpStatus, smtpRetry, smtpStatus, subscribe, type Inbox, type SmtpStatus } from "../api";
+  import type { Inbox } from "../api";
+  import { retrySmtp, smtp } from "../smtp.svelte";
   import Icon from "./Icon.svelte";
   import Select from "./Select.svelte";
 
@@ -8,25 +8,13 @@
 
   const options = $derived(inboxes.map((i) => ({ value: i.id, label: i.name, badge: i.count })));
 
-  let status = $state<SmtpStatus | null>(null);
-  onMount(() => {
-    smtpStatus().then(
-      (s) => (status = s),
-      (e) => (status = { listening: false, address: "", error: String(e) }),
-    );
-    return subscribe(onSmtpStatus((s) => (status = s)));
-  });
+  const status = $derived(smtp.status);
 
   let retrying = $state(false);
   async function retry() {
     retrying = true;
-    try {
-      status = await smtpRetry();
-    } catch (e) {
-      status = { listening: false, address: "", error: String(e) };
-    } finally {
-      retrying = false;
-    }
+    await retrySmtp();
+    retrying = false;
   }
 </script>
 

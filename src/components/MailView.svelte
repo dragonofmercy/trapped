@@ -36,7 +36,7 @@
       mail = m;
       error = "";
       tab = m.html ? "html" : "text";
-      onread();
+      if (m.wasUnread) onread();
     } catch (e) {
       if (n !== seq) return;
       mail = null;

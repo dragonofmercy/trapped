@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { smtp } from "../smtp.svelte";
   import { untrack } from "svelte";
   import { deleteMails, listMails, onMailReceived, subscribe, type MailRow } from "../api";
   import ConfirmDialog from "./ConfirmDialog.svelte";
@@ -52,7 +53,7 @@
   });
 
   $effect(() => {
-    const unsubscribe = subscribe(onMailReceived((id) => id === inboxId && load()));
+    const unsubscribe = subscribe(onMailReceived((id) => id === inboxId && search()));
     return () => {
       unsubscribe();
       clearTimeout(timer);
@@ -92,10 +93,16 @@
     if (ok) onchanged(ids);
   }
 
+  function open(id: number) {
+    const row = rows.find((m) => m.id === id);
+    if (row) row.isRead = true;
+    onselect(id);
+  }
+
   function rowKey(e: KeyboardEvent, id: number) {
     if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) {
       e.preventDefault();
-      onselect(id);
+      open(id);
     }
   }
 </script>
@@ -122,7 +129,7 @@
 
   <div class="min-h-0 flex-1 overflow-y-auto">
     {#if !rows.length}
-      <p class="p-4 text-center text-muted">{query ? "No mail matches." : "No mail yet. Send to 127.0.0.1:2525."}</p>
+      <p class="p-4 text-center text-muted">{query ? "No mail matches." : `No mail yet. Send to ${smtp.status?.address || "the SMTP server"}.`}</p>
     {/if}
     {#each rows as m (m.id)}
       <div
@@ -131,7 +138,7 @@
         aria-label={m.subject || "(no subject)"}
         aria-current={m.id === selectedId}
         class={["flex cursor-pointer items-center gap-3 border-l-2 px-2 py-2 hover:bg-bg2/40", m.id === selectedId ? "border-accent bg-bg2/60" : "border-transparent"]}
-        onclick={() => onselect(m.id)}
+        onclick={() => open(m.id)}
         onkeydown={(e) => rowKey(e, m.id)}
       >
         <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_noninteractive_element_interactions -->
