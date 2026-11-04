@@ -61,7 +61,7 @@
         <Icon name="search" />
         <input type="search" bind:value={query} placeholder="Search inboxes..." aria-label="Search inboxes" />
       </label>
-      <button type="button" class="btn" onclick={() => (naming = { inbox: null, error: "" })}><Icon name="plus" />New</button>
+      <button type="button" class="btn" onclick={() => (naming = { inbox: null, error: "" })}><Icon name="plus" />Add inbox</button>
     </div>
     {#if error}<p class="error selectable">{error}</p>{/if}
 
@@ -89,7 +89,7 @@
 {#if naming}
   {@const n = naming}
   <NameDialog
-    title={n.inbox ? "Rename Inbox" : "New Inbox"}
+    title={n.inbox ? "Rename Inbox" : "Add Inbox"}
     initial={n.inbox?.name ?? ""}
     validate={(name) => nameError(name, n.inbox)}
     error={n.error}
