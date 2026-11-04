@@ -19,7 +19,7 @@
     <!-- autofocus wins over the close cross when the modal opens; the current name is selected for overtyping -->
     <!-- svelte-ignore a11y_autofocus -->
     <input class="field w-full" bind:value={name} autofocus onfocus={(e) => e.currentTarget.select()} />
-    <p class="error selectable mt-1.5 min-h-[1.2em]">{invalid || error}</p>
+    <p class="error selectable min-h-[1.2em]">{invalid || error}</p>
     <div class="buttons">
       <button type="button" class="btn ghost" onclick={oncancel}>Cancel</button>
       <button type="submit" class="btn" disabled={invalid !== null}>OK</button>
