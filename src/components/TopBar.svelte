@@ -40,11 +40,11 @@
   <span class="flex text-cyan"><Icon name="inbox" /></span>
 {/snippet}
 
-<div class="card flex items-center gap-3 p-3">
+<div class="card flex items-center gap-2 p-3">
   <div class="w-72"><Select label="Inbox" bind:value={() => currentInboxId, (v) => onselect(v)} {options} icon={inboxIcon} /></div>
   <button type="button" class="btn w-8.5 justify-center p-0" title="Manage inboxes" aria-label="Manage inboxes" onclick={onmanage}><Icon name="gear" /></button>
 
-  <div class="ml-auto flex items-center gap-2">
+  <div class="ml-auto flex items-center gap-2 me-2">
     {#if status?.listening}
       <span class="size-2 rounded-full bg-ok"></span>
       <span class="font-mono text-muted">{status.address}</span>
