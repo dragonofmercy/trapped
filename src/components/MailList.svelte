@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { smtp } from "../smtp.svelte";
   import { untrack } from "svelte";
   import { deleteMails, listMails, onMailReceived, subscribe, type MailRow } from "../api";
   import ConfirmDialog from "./ConfirmDialog.svelte";
@@ -129,7 +128,11 @@
 
   <div class="min-h-0 flex-1 overflow-y-auto">
     {#if !rows.length}
-      <p class="p-4 text-center text-muted">{query ? "No mail matches." : `No mail yet. Send to ${smtp.status?.address || "the SMTP server"}.`}</p>
+      {#if query}
+        <p class="p-4 text-center text-muted">No mail matches.</p>
+      {:else}
+        <div class="flex flex-col items-center gap-2 p-8 text-muted [&_svg]:size-10"><Icon name="inbox" /><p>No email yet.</p></div>
+      {/if}
     {/if}
     {#each rows as m (m.id)}
       <div
