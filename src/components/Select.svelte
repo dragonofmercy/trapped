@@ -119,8 +119,7 @@
     background: transparent;
     color: var(--text);
     font:
-      500 var(--text-sm) system-ui,
-      sans-serif;
+      500 var(--text-sm) var(--font-sans);
     cursor: pointer;
     white-space: nowrap;
     text-align: left;
