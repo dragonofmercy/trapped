@@ -171,6 +171,13 @@ MAIL_ENCRYPTION=null`);
     justify-content: center;
     border-color: transparent;
   }
+  /* Bare icon: hover only brightens it, no background, border or ring */
+  .copy:hover:not(:disabled) {
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
+    color: var(--text);
+  }
   .error {
     margin: 0;
     color: var(--danger);
