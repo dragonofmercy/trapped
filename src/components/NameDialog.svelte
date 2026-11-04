@@ -22,7 +22,7 @@
     <p class="error selectable mt-1.5 min-h-[1.2em]">{invalid || error}</p>
     <div class="buttons mt-1.5">
       <button type="button" class="btn ghost" onclick={oncancel}>Cancel</button>
-      <button type="submit" class="btn primary" disabled={invalid !== null}>OK</button>
+      <button type="submit" class="btn" disabled={invalid !== null}>OK</button>
     </div>
   </form>
 </Modal>

@@ -184,6 +184,59 @@ dialog .buttons {
   opacity: 0.5;
 }
 
+/* Switch (Wallo): <label><span class="switch"><input type="checkbox" role="switch"><span class="track"></span></span></label> */
+.switch {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.switch input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+
+.track {
+  display: block;
+  width: 36px;
+  height: 20px;
+  border-radius: 10px;
+  border: 1px solid var(--line2);
+  background: var(--field);
+  transition: all 0.15s;
+}
+
+.track::after {
+  content: "";
+  display: block;
+  width: 12px;
+  height: 12px;
+  margin: 3px;
+  border-radius: 50%;
+  background: var(--muted);
+  transition: all 0.15s;
+}
+
+label:hover .track {
+  border-color: var(--accent);
+}
+
+.switch input:checked + .track {
+  background: var(--accent);
+  border-color: var(--accent-hi);
+  box-shadow: 0 0 10px rgba(var(--accent-rgb), 0.45);
+}
+
+.switch input:checked + .track::after {
+  background: #fff;
+  transform: translateX(16px);
+}
+
+.switch input:focus-visible + .track {
+  box-shadow: 0 0 0 3px rgba(var(--cyan-rgb), 0.3);
+}
+
 .chk.radio .box {
   border-radius: 50%;
 }
@@ -269,18 +322,6 @@ dialog .buttons {
   .btn:disabled {
     opacity: 0.5;
     cursor: default;
-  }
-
-  .btn.primary {
-    background: var(--accent);
-    border-color: var(--accent-hi);
-    color: #fff;
-    box-shadow: 0 4px 14px rgba(var(--accent-rgb), 0.35);
-  }
-
-  .btn.primary:hover:not(:disabled) {
-    background: var(--accent-hi);
-    box-shadow: 0 4px 18px rgba(var(--accent-rgb), 0.5);
   }
 
   .btn.ghost {

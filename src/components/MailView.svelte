@@ -160,10 +160,12 @@
         </button>
       {/each}
       {#if tab === "html"}
-        <div class="ml-auto flex gap-1">
-          <button type="button" class={["btn h-7", mobile ? "ghost" : "primary"]} aria-pressed={!mobile} onclick={() => (mobile = false)}><Icon name="monitor" />Desktop</button>
-          <button type="button" class={["btn h-7", mobile ? "primary" : "ghost"]} aria-pressed={mobile} onclick={() => (mobile = true)}><Icon name="phone" />Mobile</button>
-        </div>
+        <!-- Off = desktop width, on = mobile width -->
+        <label class="ml-auto flex cursor-pointer items-center gap-2 font-medium">
+          <span class={["flex items-center gap-1.5", mobile ? "text-muted" : "text-text"]}><Icon name="monitor" />Desktop</span>
+          <span class="switch"><input type="checkbox" role="switch" aria-label="Mobile view" bind:checked={mobile} /><span class="track"></span></span>
+          <span class={["flex items-center gap-1.5", mobile ? "text-text" : "text-muted"]}><Icon name="phone" />Mobile</span>
+        </label>
       {/if}
     </div>
 
