@@ -67,10 +67,27 @@ fn bind_error(port: u16, err: std::io::Error) -> String {
     }
 }
 
+/// Windows lets a socket on 127.0.0.1 coexist with another program listening on all interfaces (Apache on 0.0.0.0:80),
+/// and the more specific bind would silently steal its local traffic. So the wildcard addresses are probed first,
+/// with a bind and no listen (no firewall prompt).
+fn check_wildcard(port: u16) -> std::io::Result<()> {
+    use std::net::{Ipv4Addr, Ipv6Addr, SocketAddr};
+    tokio::net::TcpSocket::new_v4()?.bind(SocketAddr::from((Ipv4Addr::UNSPECIFIED, port)))?;
+    // A missing IPv6 stack is not a conflict, only an IPv6 listener on the port is
+    if let Ok(v6) = tokio::net::TcpSocket::new_v6()
+        && let Err(err) = v6.bind(SocketAddr::from((Ipv6Addr::UNSPECIFIED, port)))
+        && err.kind() == std::io::ErrorKind::AddrInUse
+    {
+        return Err(err);
+    }
+    Ok(())
+}
+
 impl Smtp {
     /// Binds 127.0.0.1:port and serves on it, replacing the previous listener. When the bind fails the previous listener (if any) keeps running.
     async fn listen(&mut self, tx: UnboundedSender<smtp::Received>, port: u16) -> Result<(), String> {
         let address = format!("127.0.0.1:{port}");
+        check_wildcard(port).map_err(|err| bind_error(port, err))?;
         let listener = TcpListener::bind(&address).await.map_err(|err| bind_error(port, err))?;
         if let Some(task) = self.task.take() {
             task.abort();
@@ -212,7 +229,7 @@ pub async fn check_smtp_port(smtp: State<'_, SmtpState>, port: u16) -> Result<&'
     if status.listening && status.address == format!("127.0.0.1:{port}") {
         return Ok("current");
     }
-    match TcpListener::bind(("127.0.0.1", port)).await {
+    match check_wildcard(port).and(TcpListener::bind(("127.0.0.1", port)).await.map(drop)) {
         Ok(_) => Ok("free"),
         Err(err) if err.kind() == std::io::ErrorKind::AddrInUse => Ok("busy"),
         Err(err) => Err(bind_error(port, err)),
