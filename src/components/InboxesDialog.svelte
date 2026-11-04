@@ -148,6 +148,10 @@
   .item {
     border-bottom: 1px solid var(--line);
   }
+  /* When the list is full, the last line would double the card border: pull it under the scroll edge */
+  .item:last-child {
+    margin-bottom: -1px;
+  }
   .tile {
     display: flex;
     align-items: center;
