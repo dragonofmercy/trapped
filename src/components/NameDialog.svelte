@@ -15,11 +15,13 @@
 </script>
 
 <Modal {title} width={320} onclose={oncancel}>
-  <form onsubmit={submit}>
-    <!-- autofocus wins over the close cross when the modal opens; the current name is selected for overtyping -->
-    <!-- svelte-ignore a11y_autofocus -->
-    <input class="field w-full" bind:value={name} autofocus onfocus={(e) => e.currentTarget.select()} />
-    {#if invalid || error}<p class="error selectable">{invalid || error}</p>{/if}
+  <form class="form" onsubmit={submit}>
+    <div class="form-row">
+      <!-- autofocus wins over the close cross when the modal opens; the current name is selected for overtyping -->
+      <!-- svelte-ignore a11y_autofocus -->
+      <input class="field w-full" bind:value={name} autofocus onfocus={(e) => e.currentTarget.select()} />
+      {#if invalid || error}<p class="error selectable">{invalid || error}</p>{/if}
+    </div>
     <div class="buttons">
       <button type="button" class="btn ghost" onclick={oncancel}>Cancel</button>
       <button type="submit" class="btn" disabled={invalid !== null}>OK</button>

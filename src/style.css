@@ -276,6 +276,24 @@ dialog .buttons {
     margin: 10px 0 0;
   }
 
+  /* Form layout: <form class="form"> rows spaced vertically, each <div class="form-row"> = field + its error */
+  .form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .form-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .form-row .error {
+    margin: 0;
+    color: var(--danger);
+  }
+
   .label {
     font-family: system-ui, sans-serif;
     font-weight: 600;
