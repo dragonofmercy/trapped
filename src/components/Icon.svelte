@@ -27,4 +27,4 @@
   const Component = $derived(ICONS[name]);
 </script>
 
-<Component size="1rem" strokeWidth={2} class="shrink-0" aria-hidden="true" />
+<Component size="1.25rem" strokeWidth={2} class="shrink-0" aria-hidden="true" />
