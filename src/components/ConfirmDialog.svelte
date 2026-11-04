@@ -1,5 +1,6 @@
 <script lang="ts">
   import Modal from "./Modal.svelte";
+  import ModalFooter from "./ModalFooter.svelte";
 
   let { title, message, confirmLabel, onconfirm, oncancel }: { title: string; message: string; confirmLabel: string; onconfirm: () => void; oncancel: () => void } = $props();
 </script>
@@ -10,11 +11,11 @@
       <p>{message}</p>
       <p class="text-muted">This action cannot be undone.</p>
     </div>
-    <div class="buttons">
+    <ModalFooter>
       <!-- Focus on Cancel: a reflex Enter must not confirm. -->
       <!-- svelte-ignore a11y_autofocus -->
       <button type="button" class="btn ghost" onclick={oncancel} autofocus>Cancel</button>
       <button type="button" class="btn danger" onclick={onconfirm}>{confirmLabel}</button>
-    </div>
+    </ModalFooter>
   </div>
 </Modal>

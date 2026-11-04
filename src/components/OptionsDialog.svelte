@@ -3,6 +3,7 @@
   import { checkSmtpPort, getSmtpPort, setSmtpPort } from "../api";
   import Icon from "./Icon.svelte";
   import Modal from "./Modal.svelte";
+  import ModalFooter from "./ModalFooter.svelte";
 
   let { onclose }: { onclose: () => void } = $props();
 
@@ -99,10 +100,10 @@ MAIL_ENCRYPTION=null`);
         <button type="button" class="btn bare icon copy" data-tip={copied ? "Copied" : "Copy"} aria-label="Copy configuration" onclick={copyEnv}><Icon name={copied ? "check" : "copy"} /></button>
       </div>
     </div>
-    <div class="buttons">
+    <ModalFooter>
       <button type="button" class="btn ghost" onclick={onclose}>Cancel</button>
       <button type="submit" class="btn" disabled={saving || invalid !== null || port === null || busy}>Save</button>
-    </div>
+    </ModalFooter>
   </form>
 </Modal>
 

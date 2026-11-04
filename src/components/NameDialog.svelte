@@ -1,5 +1,6 @@
 <script lang="ts">
   import Modal from "./Modal.svelte";
+  import ModalFooter from "./ModalFooter.svelte";
 
   // validate returns null when the name is valid, "" when invalid without a message worth showing (empty field)
   let { title, initial, validate, error = "", onconfirm, oncancel }: { title: string; initial: string; validate: (name: string) => string | null; error?: string; onconfirm: (name: string) => void; oncancel: () => void } = $props();
@@ -22,9 +23,9 @@
       <input class="field w-full" bind:value={name} autofocus onfocus={(e) => e.currentTarget.select()} />
       {#if invalid || error}<p class="error selectable">{invalid || error}</p>{/if}
     </div>
-    <div class="buttons">
+    <ModalFooter>
       <button type="button" class="btn ghost" onclick={oncancel}>Cancel</button>
       <button type="submit" class="btn" disabled={invalid !== null}>OK</button>
-    </div>
+    </ModalFooter>
   </form>
 </Modal>

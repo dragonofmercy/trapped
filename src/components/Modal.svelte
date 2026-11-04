@@ -34,12 +34,6 @@
   dialog::backdrop {
     background: rgba(0, 0, 0, 0.55);
   }
-  /* Button row at the bottom of the modal content */
-  dialog :global(.buttons) {
-    display: flex;
-    justify-content: flex-end;
-    gap: calc(var(--spacing) * 2);
-  }
   header {
     display: flex;
     align-items: center;
