@@ -184,56 +184,41 @@ dialog .buttons {
   opacity: 0.5;
 }
 
-/* Switch (Wallo): <label><span class="switch"><input type="checkbox" role="switch"><span class="track"></span></span></label> */
-.switch {
-  position: relative;
-  flex-shrink: 0;
-}
-
-.switch input {
-  position: absolute;
-  opacity: 0;
-  width: 1px;
-  height: 1px;
-}
-
-.track {
-  display: block;
-  width: 36px;
-  height: 20px;
-  border-radius: 10px;
+/* Segmented toggle: <div class="seg" role="group"><button aria-pressed="true|false">...</button>...</div> */
+.seg {
+  display: inline-flex;
+  padding: 2px;
   border: 1px solid var(--line2);
+  border-radius: 8px;
   background: var(--field);
-  transition: all 0.15s;
 }
 
-.track::after {
-  content: "";
-  display: block;
-  width: 12px;
-  height: 12px;
-  margin: 3px;
-  border-radius: 50%;
-  background: var(--muted);
-  transition: all 0.15s;
+.seg button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  font: 500 13px system-ui, sans-serif;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
 }
 
-label:hover .track {
-  border-color: var(--accent);
+.seg button:hover {
+  color: var(--text);
 }
 
-.switch input:checked + .track {
+.seg button[aria-pressed="true"] {
   background: var(--accent);
-  border-color: var(--accent-hi);
-  box-shadow: 0 0 10px rgba(var(--accent-rgb), 0.45);
+  color: #fff;
 }
 
-.switch input:checked + .track::after {
-  background: #fff;
-  transform: translateX(16px);
-}
-
-.switch input:focus-visible + .track {
+.seg button:focus-visible {
+  outline: none;
   box-shadow: 0 0 0 3px rgba(var(--cyan-rgb), 0.3);
 }
 
