@@ -126,6 +126,8 @@ MAIL_ENCRYPTION=null</pre>
     appearance: textfield;
   }
   .help {
+    padding-top: calc(var(--spacing) * 4);
+    border-top: 1px solid var(--line);
     color: var(--muted);
   }
   .help code,
