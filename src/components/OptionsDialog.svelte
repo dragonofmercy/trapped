@@ -134,6 +134,13 @@ MAIL_ENCRYPTION=null`);
   .option:not(:first-child) {
     border-top: 1px solid var(--line);
   }
+  /* The modal body padding and the form gap already space the first and last rows */
+  .option:first-child {
+    padding-top: 0;
+  }
+  .option:last-child {
+    padding-bottom: 0;
+  }
   .text {
     flex: 1;
     display: flex;
