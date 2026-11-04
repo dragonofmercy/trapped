@@ -93,7 +93,7 @@ MAIL_ENCRYPTION=null`);
     </div>
     <!-- Setup help -->
     <div class="help space-y-2">
-      <p>Mails are grouped by SMTP username: pick any name, Trapped creates the inbox on the first mail it receives.</p>
+      <p>Mails are grouped by SMTP username: pick any name.<br />Trapped creates the inbox on the first mail it receives.</p>
       <p>Laravel <code>.env</code>:</p>
       <div class="relative">
         <pre class="selectable">{env}</pre>
