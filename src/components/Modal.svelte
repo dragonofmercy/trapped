@@ -19,7 +19,26 @@
 
 <style>
   dialog {
+    /* Tailwind preflight resets margins to 0, which removes the browser's centering of modals */
+    margin: auto;
     max-width: 90vw;
+    background: var(--dialog-bg);
+    color: var(--text);
+    border: 1px solid var(--line2);
+    border-radius: var(--radius-xl);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+    /* The top layer does not inherit the body's desktop feel */
+    user-select: none;
+    cursor: default;
+  }
+  dialog::backdrop {
+    background: rgba(0, 0, 0, 0.55);
+  }
+  /* Button row at the bottom of the modal content */
+  dialog :global(.buttons) {
+    display: flex;
+    justify-content: flex-end;
+    gap: calc(var(--spacing) * 2);
   }
   header {
     display: flex;
