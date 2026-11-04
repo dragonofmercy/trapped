@@ -36,7 +36,7 @@
       if (n !== seq) return;
       mail = m;
       error = "";
-      tab = m.html ? "html" : "text";
+      tab = m.html ? "html" : m.text ? "text" : "source";
       if (m.wasUnread) onread();
     } catch (e) {
       if (n !== seq) return;
@@ -65,9 +65,10 @@
     });
   });
 
+  // HTML and Text only show when the mail has that part
   const tabs = $derived<{ id: Tab; label: string }[]>([
-    { id: "html", label: "HTML" },
-    { id: "text", label: "Text" },
+    ...(mail?.html ? [{ id: "html" as const, label: "HTML" }] : []),
+    ...(mail?.text ? [{ id: "text" as const, label: "Text" }] : []),
     { id: "source", label: "Source" },
     { id: "headers", label: "Headers" },
     { id: "attachments", label: `Attachments (${mail?.attachments.length ?? 0})` },
@@ -167,13 +168,9 @@
 
     <div class="min-h-0 flex-1 overflow-auto">
       {#if tab === "html"}
-        {#if !m.html}
-          <p class="p-4 text-center text-muted">This mail has no HTML part.</p>
-        {:else}
-          <iframe sandbox="allow-same-origin" srcdoc={m.html} title="Mail HTML" class="mx-auto block h-full rounded-md border-0 bg-white" style:width={mobile ? "calc(var(--spacing) * 97.5)" : "100%"} onload={onFrameLoad}></iframe>
-        {/if}
+        <iframe sandbox="allow-same-origin" srcdoc={m.html} title="Mail HTML" class="mx-auto block h-full rounded-md border-0 bg-white" style:width={mobile ? "calc(var(--spacing) * 97.5)" : "100%"} onload={onFrameLoad}></iframe>
       {:else if tab === "text"}
-        <pre class="selectable font-mono break-words whitespace-pre-wrap">{m.text ?? "(no text part)"}</pre>
+        <pre class="selectable font-mono break-words whitespace-pre-wrap">{m.text}</pre>
       {:else if tab === "source"}
         {#if rawError}
           <p class="selectable text-danger">{rawError}</p>
