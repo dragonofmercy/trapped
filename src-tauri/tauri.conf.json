@@ -13,6 +13,7 @@
     "windows": [
       {
         "title": "Trapped",
+        "visible": false,
         "theme": "Dark",
         "backgroundColor": "#0a1628",
         "width": 1280,

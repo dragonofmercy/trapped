@@ -89,6 +89,9 @@ pub fn run() {
                     }
                 })
                 .build(app)?;
+
+            // The window is created hidden (tauri.conf.json) so the restored position applies before it is seen
+            show_main(app.handle());
             Ok(())
         })
         .on_window_event(|window, ev| {
