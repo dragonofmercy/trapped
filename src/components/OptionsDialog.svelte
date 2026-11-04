@@ -86,7 +86,7 @@ MAIL_ENCRYPTION=null`);
   }
 </script>
 
-<Modal title="Options" class="w-150" {onclose}>
+<Modal title="Options" class="w-200" {onclose}>
   <form class="form" onsubmit={submit}>
     <!-- One row per option (title + description, control on the right), rows separated by a border -->
     <div>
