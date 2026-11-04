@@ -63,6 +63,8 @@ export type SmtpHost = "127.0.0.1" | "0.0.0.0";
 export const getSmtpConfig = () => invoke<{ host: SmtpHost; port: number }>("get_smtp_config");
 export const checkSmtpPort = (host: SmtpHost, port: number) => invoke<"current" | "free" | "busy">("check_smtp_port", { host, port });
 export const setSmtpConfig = (host: SmtpHost, port: number) => invoke<SmtpStatus>("set_smtp_config", { host, port });
+export const getCheckUpdates = () => invoke<boolean>("get_check_updates");
+export const setCheckUpdates = (enabled: boolean) => invoke<void>("set_check_updates", { enabled });
 export const openAttachment = (mailId: number, index: number) => invoke<void>("open_attachment", { mailId, index });
 export const saveAttachment = (mailId: number, index: number, path: string) => invoke<void>("save_attachment", { mailId, index, path });
 

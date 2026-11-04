@@ -125,6 +125,15 @@ impl Db {
         self.set_setting("smtp_port", &port.to_string())
     }
 
+    /// On by default: the app looks for a new version each time it starts
+    pub fn check_updates(&self) -> rusqlite::Result<bool> {
+        Ok(self.setting("check_updates")?.as_deref() != Some("0"))
+    }
+
+    pub fn set_check_updates(&self, enabled: bool) -> rusqlite::Result<()> {
+        self.set_setting("check_updates", if enabled { "1" } else { "0" })
+    }
+
     pub fn smtp_host(&self) -> rusqlite::Result<SmtpHost> {
         Ok(if self.setting("smtp_host")?.as_deref() == Some("0.0.0.0") { SmtpHost::All } else { SmtpHost::Local })
     }
@@ -279,6 +288,16 @@ mod tests {
         db.set_smtp_port(2526).unwrap();
         db.set_smtp_port(1025).unwrap();
         assert_eq!(db.smtp_port().unwrap(), 1025);
+    }
+
+    #[test]
+    fn check_updates_setting() {
+        let db = Db::open_in_memory().unwrap();
+        assert!(db.check_updates().unwrap());
+        db.set_check_updates(false).unwrap();
+        assert!(!db.check_updates().unwrap());
+        db.set_check_updates(true).unwrap();
+        assert!(db.check_updates().unwrap());
     }
 
     #[test]

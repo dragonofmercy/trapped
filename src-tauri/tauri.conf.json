@@ -1,7 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Trapped",
-  "version": "0.1.0",
   "identifier": "com.trapped.desktop",
   "build": {
     "beforeDevCommand": "npm run dev",
@@ -35,6 +34,14 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "createUpdaterArtifacts": true
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDQ1NDNFRDM0MDExMzlFOEEKUldTS25oTUJOTzFEUmJVVmRuVHQxT2NmVjhYbzlzWHpiWmp0blFFakNYY1lZS0lSUHZBbkNNaW4K",
+      "endpoints": ["https://github.com/dragonofmercy/trapped/releases/latest/download/latest.json"],
+      "windows": { "installMode": "passive" }
+    }
   }
 }

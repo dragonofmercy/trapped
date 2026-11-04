@@ -1,6 +1,6 @@
 import { onSmtpStatus, smtpRetry, smtpStatus, type SmtpStatus } from "./api";
 
-// One app-wide subscription (lives as long as the window), read by the top bar and the empty mail list
+// One app-wide subscription (lives as long as the window), read by the top bar
 export const smtp = $state<{ status: SmtpStatus | null }>({ status: null });
 
 const failed = (e: unknown): SmtpStatus => ({ listening: false, address: "", error: String(e) });

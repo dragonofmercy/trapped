@@ -6,6 +6,8 @@
   import InboxesDialog from "./components/InboxesDialog.svelte";
   import OptionsDialog from "./components/OptionsDialog.svelte";
   import TopBar from "./components/TopBar.svelte";
+  import UpdateBanner from "./components/UpdateBanner.svelte";
+  import { checkUpdate, updater } from "./update.svelte";
 
   let inboxes = $state<Inbox[]>([]);
   let currentInboxId = $state(0);
@@ -31,6 +33,7 @@
 
   onMount(() => {
     reload();
+    checkUpdate();
     return subscribe(onMailReceived(reloadSoon));
   });
 
@@ -60,6 +63,7 @@
 
 <div class="flex h-full flex-col gap-3 p-3">
   <TopBar {inboxes} {currentInboxId} onselect={select} onmanage={() => (showInboxes = true)} onoptions={() => (showOptions = true)} />
+  {#if updater.update}<UpdateBanner update={updater.update} />{/if}
   <div class="grid min-h-0 flex-1 grid-cols-[calc(var(--spacing)*90)_1fr] gap-3">
     <MailList inboxId={currentInboxId} selectedId={selectedMailId} refreshKey={listKey} onselect={(id) => (selectedMailId = id)} onchanged={listChanged} />
     <MailView

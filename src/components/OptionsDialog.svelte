@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { checkSmtpPort, getSmtpConfig, setSmtpConfig, type SmtpHost } from "../api";
+  import { checkSmtpPort, getCheckUpdates, getSmtpConfig, setCheckUpdates, setSmtpConfig, type SmtpHost } from "../api";
+  import { checkUpdate } from "../update.svelte";
   import Icon from "./Icon.svelte";
   import Modal from "./Modal.svelte";
   import ModalFooter from "./ModalFooter.svelte";
@@ -16,9 +17,12 @@
     { value: "127.0.0.1", label: "127.0.0.1 (this machine)" },
     { value: "0.0.0.0", label: "0.0.0.0 (all interfaces)" },
   ];
+  let checkUpdates = $state(true);
+  let savedCheckUpdates = true;
   let error = $state("");
   let saving = $state(false);
   onMount(() => {
+    getCheckUpdates().then((v) => (checkUpdates = savedCheckUpdates = v), () => {});
     getSmtpConfig().then(
       (c) => {
         port = saved = c.port;
@@ -77,6 +81,10 @@ MAIL_ENCRYPTION=null`);
     error = "";
     try {
       await setSmtpConfig(host, port);
+      if (checkUpdates !== savedCheckUpdates) {
+        await setCheckUpdates(checkUpdates);
+        if (checkUpdates) checkUpdate();
+      }
       onclose();
     } catch (err) {
       error = String(err);
@@ -107,6 +115,10 @@ MAIL_ENCRYPTION=null`);
         </span>
         <div class="w-60 shrink-0"><Select label="Listen address" bind:value={() => host, (v) => ((host = v), (error = ""))} options={HOSTS} /></div>
       </div>
+      <label class="option">
+        <span class="text"><strong>Check for updates automatically</strong><span>Looks for a new Trapped version each time the app starts.</span></span>
+        <span class="chk"><input type="checkbox" bind:checked={checkUpdates} /><span class="box"><svg viewBox="0 0 16 16"><path d="M3 8.5l3.2 3L13 4.5" /></svg></span></span>
+      </label>
     </div>
     <!-- Setup help -->
     <div class="help space-y-2">

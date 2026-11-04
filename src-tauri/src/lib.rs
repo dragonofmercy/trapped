@@ -44,6 +44,7 @@ pub fn run() {
         .plugin(tauri_plugin_single_instance::init(|app, _, _| show_main(app)))
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         // Position, size and maximized state survive restarts; visibility is left out, else quitting from the tray would start hidden
         .plugin(tauri_plugin_window_state::Builder::default().with_state_flags(StateFlags::all() & !StateFlags::VISIBLE).build())
         .setup(|app| {
@@ -110,6 +111,8 @@ pub fn run() {
             commands::create_inbox,
             commands::get_smtp_config,
             commands::set_smtp_config,
+            commands::get_check_updates,
+            commands::set_check_updates,
             commands::check_smtp_port,
             commands::delete_inbox,
             commands::smtp_status,

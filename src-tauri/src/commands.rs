@@ -305,6 +305,16 @@ pub async fn set_smtp_config(app: AppHandle, host: SmtpHost, port: NonZeroU16) -
     Ok(smtp.status.clone())
 }
 
+#[tauri::command]
+pub async fn get_check_updates(db: State<'_, DbState>) -> Result<bool, String> {
+    lock(&db).check_updates().map_err(e)
+}
+
+#[tauri::command]
+pub async fn set_check_updates(db: State<'_, DbState>, enabled: bool) -> Result<(), String> {
+    lock(&db).set_check_updates(enabled).map_err(e)
+}
+
 fn attachment_data(app: &AppHandle, mail_id: i64, index: usize) -> Result<parse::Attachment, String> {
     let m = lock(&app.state::<DbState>()).get_raw(mail_id).map_err(e)?;
     parse::attachment(&m, index).ok_or_else(|| "Attachment not found".to_string())
