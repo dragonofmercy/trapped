@@ -15,6 +15,8 @@
   let naming = $state<Naming | null>(null);
   let deleting = $state<Inbox | null>(null);
   let error = $state("");
+  let query = $state("");
+  const shown = $derived(inboxes.filter((i) => i.name.toLowerCase().includes(query.trim().toLowerCase())));
 
   function nameError(name: string, except?: Inbox | null) {
     const n = name.trim();
@@ -58,19 +60,34 @@
   <div class="flex h-[440px] flex-col">
     <div class="page flex items-center gap-2">
       <h2 class="m-0 mr-auto">Inboxes</h2>
-      <button type="button" class="btn" onclick={() => (naming = { inbox: null, error: "" })}><Icon name="plus" />New</button>
-      <button type="button" class="btn ghost close" title="Close" aria-label="Close" onclick={onclose}><Icon name="close" /></button>
+      <button type="button" class="btn ghost square" title="Close" aria-label="Close" onclick={onclose}><Icon name="close" /></button>
+    </div>
+
+    <!-- Search on the left, add on the right (Definitive Mod Manager layout) -->
+    <div class="flex items-center gap-2">
+      <label class="field search">
+        <Icon name="search" />
+        <input type="search" bind:value={query} placeholder="Search inboxes..." aria-label="Search inboxes" />
+      </label>
+      <button type="button" class="btn primary" onclick={() => (naming = { inbox: null, error: "" })}><Icon name="plus" />New</button>
     </div>
     {#if error}<p class="error selectable">{error}</p>{/if}
-    <div class="min-h-0 flex-1 overflow-y-auto">
-      {#if !inboxes.length}<p class="m-0 py-4 text-muted">No inbox. One is created on the first mail sent with a new username.</p>{/if}
-      {#each inboxes as i (i.id)}
-        <div class="option">
-          <span class="text"><strong>{i.name}</strong><span>{i.count} {i.count === 1 ? "mail" : "mails"}</span></span>
-          <div class="flex gap-2">
-            <button type="button" class="btn" onclick={() => (naming = { inbox: i, error: "" })}><Icon name="pencil" />Rename</button>
-            <button type="button" class="btn danger" onclick={() => (deleting = i)}><Icon name="trash" />Delete</button>
-          </div>
+
+    <div class="mt-3 flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
+      {#if !inboxes.length}
+        <p class="m-0 py-4 text-center text-muted">No inbox. One is created on the first mail sent with a new username.</p>
+      {:else if !shown.length}
+        <p class="m-0 py-4 text-center text-muted">No inbox matches.</p>
+      {/if}
+      {#each shown as i (i.id)}
+        <div class="item">
+          <span class="tile"><Icon name="inbox" size={16} /></span>
+          <span class="text">
+            <strong>{i.name}</strong>
+            <span><b>{i.count}</b> {i.count === 1 ? "mail" : "mails"}{#if i.unread}<span class="sep"></span><b>{i.unread}</b> unread{/if}</span>
+          </span>
+          <button type="button" class="btn square" title="Rename" aria-label={`Rename ${i.name}`} onclick={() => (naming = { inbox: i, error: "" })}><Icon name="pencil" /></button>
+          <button type="button" class="btn danger square" title="Delete" aria-label={`Delete ${i.name}`} onclick={() => (deleting = i)}><Icon name="trash" /></button>
         </div>
       {/each}
     </div>
@@ -100,32 +117,70 @@
 {/if}
 
 <style>
-  /* Title row on top, then one inbox per row (Wallo's options layout) */
   .page {
     height: 34px;
-    margin-bottom: 4px;
+    margin-bottom: 10px;
   }
-  .close {
+  .square {
     width: 34px;
     padding: 0;
     justify-content: center;
+  }
+  .page .square {
     border-color: transparent;
   }
-  .option {
+  .search {
+    flex: 1;
     display: flex;
     align-items: center;
-    gap: 24px;
-    padding: 14px 0;
+    gap: 10px;
+    padding: 0 12px;
+    color: var(--muted);
+    cursor: text;
   }
-  .option + .option {
-    border-top: 1px solid var(--line);
+  .search:focus-within {
+    border-color: var(--cyan);
+    box-shadow: 0 0 0 3px rgba(var(--cyan-rgb), 0.15);
+  }
+  .search input {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    border: 0;
+    outline: none;
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+  }
+  /* One card per inbox, accent bar on the left */
+  .item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--accent);
+    border-radius: 10px;
+    background: linear-gradient(180deg, var(--card-a), var(--card-b));
+  }
+  .tile {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+    border-radius: 8px;
+    color: var(--cyan);
+    background: rgba(var(--accent-rgb), 0.12);
   }
   .text {
     flex: 1;
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 3px;
   }
   .text strong {
     font-weight: 600;
@@ -133,11 +188,19 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  .text span {
+  .text > span {
     color: var(--muted);
   }
+  .text b {
+    font-weight: 600;
+    color: var(--accent-hi);
+  }
+  .sep {
+    display: inline-block;
+    width: 14px;
+  }
   dialog {
-    width: 560px;
+    width: 600px;
     max-width: 90vw;
   }
 </style>
