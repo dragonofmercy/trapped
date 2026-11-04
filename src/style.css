@@ -50,6 +50,12 @@
   --font-mono: ui-monospace, Consolas, monospace;
 }
 
+/* Scrollbars in the theme colors (thumb = line2, track = transparent) */
+* {
+  scrollbar-color: var(--line2) transparent;
+  scrollbar-width: thin;
+}
+
 html,
 body {
   margin: 0;
