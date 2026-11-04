@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { getSmtpPort, setSmtpPort } from "../api";
+  import { checkSmtpPort, getSmtpPort, setSmtpPort } from "../api";
   import Modal from "./Modal.svelte";
 
   let { onclose }: { onclose: () => void } = $props();
@@ -17,6 +17,22 @@
   });
 
   const invalid = $derived(port !== null && !(Number.isInteger(port) && port >= 1 && port <= 65535) ? "Port must be a number between 1 and 65535" : null);
+
+  // Availability of the typed port, checked 300ms after the last keystroke; null while unknown
+  let availability = $state<{ port: number; state: "current" | "free" | "busy" | "error"; message?: string } | null>(null);
+  $effect(() => {
+    const p = port;
+    availability = null;
+    if (p === null || invalid !== null) return;
+    const timer = setTimeout(() => {
+      checkSmtpPort(p).then(
+        (state) => port === p && (availability = { port: p, state }),
+        (e) => port === p && (availability = { port: p, state: "error", message: String(e) }),
+      );
+    }, 300);
+    return () => clearTimeout(timer);
+  });
+  const busy = $derived(availability?.state === "busy" || availability?.state === "error");
 
   async function submit(e: SubmitEvent) {
     e.preventDefault();
@@ -43,11 +59,21 @@
         <!-- svelte-ignore a11y_autofocus -->
         <input class="field w-28 text-right" type="number" min="1" max="65535" autocomplete="off" bind:value={port} autofocus oninput={() => (error = "")} />
       </label>
-      {#if invalid || error}<p class="error selectable">{invalid || error}</p>{/if}
+      {#if invalid || error}
+        <p class="error selectable">{invalid || error}</p>
+      {:else if availability?.state === "current"}
+        <p class="text-muted">Trapped is listening on this port.</p>
+      {:else if availability?.state === "free"}
+        <p class="text-ok">Port {availability.port} is available.</p>
+      {:else if availability?.state === "busy"}
+        <p class="error">Port {availability.port} is already in use by another program.</p>
+      {:else if availability?.state === "error"}
+        <p class="error selectable">{availability.message}</p>
+      {/if}
     </div>
     <div class="buttons">
       <button type="button" class="btn ghost" onclick={onclose}>Cancel</button>
-      <button type="submit" class="btn" disabled={saving || invalid !== null || port === null}>Save</button>
+      <button type="submit" class="btn" disabled={saving || invalid !== null || port === null || busy}>Save</button>
     </div>
   </form>
 </Modal>

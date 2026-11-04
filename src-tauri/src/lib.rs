@@ -105,6 +105,7 @@ pub fn run() {
             commands::create_inbox,
             commands::get_smtp_port,
             commands::set_smtp_port,
+            commands::check_smtp_port,
             commands::delete_inbox,
             commands::smtp_status,
             commands::smtp_retry,

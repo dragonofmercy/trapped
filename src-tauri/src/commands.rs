@@ -201,6 +201,24 @@ pub async fn get_smtp_port(db: State<'_, DbState>) -> Result<u16, String> {
     db.lock().unwrap_or_else(|p| p.into_inner()).smtp_port().map_err(e)
 }
 
+/// Tells the Options modal whether a port can be used: "current" (Trapped already listens on it), "free" or "busy".
+/// Other bind failures (e.g. a port reserved by Windows) come back as an error message.
+#[tauri::command]
+pub async fn check_smtp_port(smtp: State<'_, SmtpState>, port: u16) -> Result<&'static str, String> {
+    if port == 0 {
+        return Err("Port must be between 1 and 65535".into());
+    }
+    let status = smtp.lock().await.status.clone();
+    if status.listening && status.address == format!("127.0.0.1:{port}") {
+        return Ok("current");
+    }
+    match TcpListener::bind(("127.0.0.1", port)).await {
+        Ok(_) => Ok("free"),
+        Err(err) if err.kind() == std::io::ErrorKind::AddrInUse => Ok("busy"),
+        Err(err) => Err(bind_error(port, err)),
+    }
+}
+
 /// Moves the listener to the new port, then saves it. A failed bind leaves both the listener and the saved port unchanged.
 #[tauri::command]
 pub async fn set_smtp_port(app: AppHandle, port: u16) -> Result<SmtpStatus, String> {
