@@ -170,7 +170,7 @@
         {#if !m.html}
           <p class="p-4 text-center text-muted">This mail has no HTML part.</p>
         {:else}
-          <iframe sandbox="allow-same-origin" srcdoc={m.html} title="Mail HTML" class="mx-auto block h-full border-0 bg-white" style:width={mobile ? "calc(var(--spacing) * 97.5)" : "100%"} onload={onFrameLoad}></iframe>
+          <iframe sandbox="allow-same-origin" srcdoc={m.html} title="Mail HTML" class="mx-auto block h-full rounded-md border-0 bg-white" style:width={mobile ? "calc(var(--spacing) * 97.5)" : "100%"} onload={onFrameLoad}></iframe>
         {/if}
       {:else if tab === "text"}
         <pre class="selectable font-mono break-words whitespace-pre-wrap">{m.text ?? "(no text part)"}</pre>
