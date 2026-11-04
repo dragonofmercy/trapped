@@ -144,8 +144,9 @@
     gap: calc(var(--spacing) * 3);
     padding: calc(var(--spacing) * 2.5) calc(var(--spacing) * 3);
   }
-  .item + .item {
-    border-top: 1px solid var(--line);
+  /* Every row, the last one included: the list keeps its height, so the last row needs a closing line too */
+  .item {
+    border-bottom: 1px solid var(--line);
   }
   .tile {
     display: flex;
