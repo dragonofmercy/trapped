@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { listInboxes, onMailReceived, type Inbox } from "./api";
+  import { listInboxes, onMailReceived, subscribe, type Inbox } from "./api";
   import MailList from "./components/MailList.svelte";
   import MailView from "./components/MailView.svelte";
   import InboxesDialog from "./components/InboxesDialog.svelte";
@@ -20,36 +20,34 @@
   }
 
   async function reload(selectId?: number) {
-    inboxes = await listInboxes();
+    try {
+      inboxes = await listInboxes();
+    } catch {
+      return;
+    }
     if (selectId !== undefined) select(selectId);
     else if (!inboxes.some((i) => i.id === currentInboxId)) select(inboxes[0]?.id ?? 0);
   }
 
   onMount(() => {
-    let unlisten: (() => void) | undefined;
-    let dead = false;
-    onMailReceived(() => reload().catch(() => {})).then((u) => (dead ? u() : (unlisten = u)));
-    reload().catch(() => {});
-    return () => {
-      dead = true;
-      unlisten?.();
-    };
+    reload();
+    return subscribe(onMailReceived(() => reload()));
   });
 
   function refresh() {
     listKey++;
-    reload().catch(() => {});
+    reload();
   }
 
   function inboxesChanged(selectId?: number) {
     listKey++;
     selectedMailId = null;
-    reload(selectId).catch(() => {});
+    reload(selectId);
   }
 
   function listChanged(deletedIds: number[]) {
     if (selectedMailId !== null && deletedIds.includes(selectedMailId)) selectedMailId = null;
-    reload().catch(() => {});
+    reload();
   }
 </script>
 

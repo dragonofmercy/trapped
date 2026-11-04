@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { onSmtpStatus, smtpRetry, smtpStatus, type Inbox, type SmtpStatus } from "../api";
+  import { onSmtpStatus, smtpRetry, smtpStatus, subscribe, type Inbox, type SmtpStatus } from "../api";
   import Icon from "./Icon.svelte";
   import Select from "./Select.svelte";
 
@@ -10,17 +10,11 @@
 
   let status = $state<SmtpStatus | null>(null);
   onMount(() => {
-    let unlisten: (() => void) | undefined;
-    let dead = false;
-    onSmtpStatus((s) => (status = s)).then((u) => (dead ? u() : (unlisten = u)));
     smtpStatus().then(
       (s) => (status = s),
       (e) => (status = { listening: false, address: "", error: String(e) }),
     );
-    return () => {
-      dead = true;
-      unlisten?.();
-    };
+    return subscribe(onSmtpStatus((s) => (status = s)));
   });
 
   let retrying = $state(false);
@@ -42,7 +36,7 @@
 
 <div class="card flex items-center gap-2 p-3">
   <div class="w-72"><Select label="Inbox" bind:value={() => currentInboxId, (v) => onselect(v)} {options} icon={inboxIcon} /></div>
-  <button type="button" class="btn w-8.5 justify-center p-0" data-tip="Manage inboxes" aria-label="Manage inboxes" onclick={onmanage}><Icon name="mailpen" /></button>
+  <button type="button" class="btn icon" data-tip="Manage inboxes" aria-label="Manage inboxes" onclick={onmanage}><Icon name="mailpen" /></button>
 
   <div class="ml-auto flex items-center gap-2 me-2">
     {#if status?.listening}
@@ -54,5 +48,5 @@
       <button type="button" class="btn" disabled={retrying} onclick={retry}><Icon name="reset" />Retry</button>
     {/if}
   </div>
-  <button type="button" class="btn w-8.5 justify-center p-0" data-tip="Options" aria-label="Options" onclick={onoptions}><Icon name="gear" /></button>
+  <button type="button" class="btn icon" data-tip="Options" aria-label="Options" onclick={onoptions}><Icon name="gear" /></button>
 </div>

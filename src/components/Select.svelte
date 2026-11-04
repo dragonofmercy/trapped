@@ -71,9 +71,7 @@
   }
   .badge {
     font:
-      600 var(--text-xs) ui-monospace,
-      Consolas,
-      monospace;
+      600 var(--text-xs) var(--font-mono);
     color: var(--muted);
     background: rgba(127, 127, 127, 0.14);
     border-radius: var(--radius-xl);

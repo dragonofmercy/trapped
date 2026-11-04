@@ -14,7 +14,7 @@
   }
 </script>
 
-<Modal {title} width={80} onclose={oncancel}>
+<Modal {title} class="w-80" onclose={oncancel}>
   <form class="form" onsubmit={submit}>
     <div class="form-row">
       <!-- autofocus wins over the close cross when the modal opens; the current name is selected for overtyping -->

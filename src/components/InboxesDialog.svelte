@@ -53,9 +53,9 @@
   }
 </script>
 
-<Modal title="Inboxes" width={150} {onclose}>
+<Modal title="Inboxes" class="w-150" {onclose}>
   <div class="flex h-100 flex-col">
-    <!-- Search on the left, add on the right (Definitive Mod Manager layout) -->
+    <!-- Search on the left, add on the right -->
     <div class="flex items-center gap-2">
       <label class="field search">
         <Icon name="search" />
@@ -63,13 +63,13 @@
       </label>
       <button type="button" class="btn" onclick={() => (naming = { inbox: null, error: "" })}><Icon name="mailplus" />Add inbox</button>
     </div>
-    {#if error}<p class="error selectable">{error}</p>{/if}
+    {#if error}<p class="error selectable mt-3">{error}</p>{/if}
 
     <div class="list mt-3 min-h-0 flex-1 overflow-y-auto">
       {#if !inboxes.length}
-        <p class="m-0 py-4 text-center text-muted">No inbox. One is created on the first mail sent with a new username.</p>
+        <p class="py-4 text-center text-muted">No inbox. One is created on the first mail sent with a new username.</p>
       {:else if !shown.length}
-        <p class="m-0 py-4 text-center text-muted">No inbox matches.</p>
+        <p class="py-4 text-center text-muted">No inbox matches.</p>
       {/if}
       {#each shown as i (i.id)}
         <div class="item">
@@ -78,8 +78,8 @@
             <strong>{i.name}</strong>
             <span><b>{i.count}</b> {i.count === 1 ? "mail" : "mails"}{#if i.unread}<span class="sep"></span><b>{i.unread}</b> unread{/if}</span>
           </span>
-          <button type="button" class="btn square tip-left" data-tip="Rename" aria-label={`Rename ${i.name}`} onclick={() => (naming = { inbox: i, error: "" })}><Icon name="pencil" /></button>
-          <button type="button" class="btn danger square tip-left" data-tip="Delete" aria-label={`Delete ${i.name}`} onclick={() => (deleting = i)}><Icon name="trash" /></button>
+          <button type="button" class="btn icon tip-left" data-tip="Rename" aria-label={`Rename ${i.name}`} onclick={() => (naming = { inbox: i, error: "" })}><Icon name="pencil" /></button>
+          <button type="button" class="btn danger icon tip-left" data-tip="Delete" aria-label={`Delete ${i.name}`} onclick={() => (deleting = i)}><Icon name="trash" /></button>
         </div>
       {/each}
     </div>
@@ -109,11 +109,6 @@
 {/if}
 
 <style>
-  .square {
-    width: calc(var(--spacing) * 8.5);
-    padding: 0;
-    justify-content: center;
-  }
   .search {
     flex: 1;
     display: flex;

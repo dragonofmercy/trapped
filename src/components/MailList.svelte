@@ -1,6 +1,6 @@
 <script lang="ts">
   import { untrack } from "svelte";
-  import { deleteMails, listMails, onMailReceived, type MailRow } from "../api";
+  import { deleteMails, listMails, onMailReceived, subscribe, type MailRow } from "../api";
   import ConfirmDialog from "./ConfirmDialog.svelte";
   import Icon from "./Icon.svelte";
 
@@ -21,7 +21,8 @@
       const r = await listMails(inboxId, query);
       if (n !== seq) return;
       rows = r;
-      checked = checked.filter((id) => r.some((m) => m.id === id));
+      const ids = new Set(r.map((m) => m.id));
+      checked = checked.filter((id) => ids.has(id));
       error = "";
     } catch (e) {
       if (n === seq) error = String(e);
@@ -51,12 +52,9 @@
   });
 
   $effect(() => {
-    let unlisten: (() => void) | undefined;
-    let dead = false;
-    onMailReceived((id) => id === inboxId && load()).then((u) => (dead ? u() : (unlisten = u)));
+    const unsubscribe = subscribe(onMailReceived((id) => id === inboxId && load()));
     return () => {
-      dead = true;
-      unlisten?.();
+      unsubscribe();
       clearTimeout(timer);
     };
   });
@@ -124,7 +122,7 @@
 
   <div class="min-h-0 flex-1 overflow-y-auto">
     {#if !rows.length}
-      <p class="m-0 p-4 text-center text-muted">{query ? "No mail matches." : "No mail yet. Send to 127.0.0.1:2525."}</p>
+      <p class="p-4 text-center text-muted">{query ? "No mail matches." : "No mail yet. Send to 127.0.0.1:2525."}</p>
     {/if}
     {#each rows as m (m.id)}
       <div

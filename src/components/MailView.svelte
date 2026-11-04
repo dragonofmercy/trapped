@@ -113,17 +113,14 @@
       if (path && mail) await saveAttachment(mail.id, index, path);
     });
 
-  async function remove() {
+  function remove() {
     confirmDelete = false;
     const id = mail?.id;
-    if (id === undefined) return;
-    actionError = "";
-    try {
-      await deleteMails([id]);
-      ondeleted();
-    } catch (e) {
-      actionError = String(e);
-    }
+    if (id !== undefined)
+      run(async () => {
+        await deleteMails([id]);
+        ondeleted();
+      });
   }
 </script>
 
@@ -136,7 +133,7 @@
     {@const m = mail}
     <div class="flex items-start gap-3">
       <div class="selectable min-w-0 flex-1">
-        <h2 class="m-0 text-base font-bold break-words text-text">{m.subject || "(no subject)"}</h2>
+        <h2 class="text-base font-bold break-words text-text">{m.subject || "(no subject)"}</h2>
         <div class="text-muted"><span class="label">From</span> {m.from}</div>
         {#if m.to.length}<div class="text-muted"><span class="label">To</span> {m.to.join(", ")}</div>{/if}
         {#if m.cc.length}<div class="text-muted"><span class="label">Cc</span> {m.cc.join(", ")}</div>{/if}
@@ -170,17 +167,17 @@
     <div class="min-h-0 flex-1 overflow-auto">
       {#if tab === "html"}
         {#if !m.html}
-          <p class="m-0 p-4 text-center text-muted">This mail has no HTML part.</p>
+          <p class="p-4 text-center text-muted">This mail has no HTML part.</p>
         {:else}
           <iframe sandbox="allow-same-origin" srcdoc={m.html} title="Mail HTML" class="mx-auto block h-full border-0 bg-white" style:width={mobile ? "calc(var(--spacing) * 97.5)" : "100%"} onload={onFrameLoad}></iframe>
         {/if}
       {:else if tab === "text"}
-        <pre class="selectable m-0 font-mono break-words whitespace-pre-wrap">{m.text ?? "(no text part)"}</pre>
+        <pre class="selectable font-mono break-words whitespace-pre-wrap">{m.text ?? "(no text part)"}</pre>
       {:else if tab === "source"}
         {#if rawError}
-          <p class="selectable m-0 text-danger">{rawError}</p>
+          <p class="selectable text-danger">{rawError}</p>
         {:else}
-          <pre class="selectable m-0 font-mono">{raw?.id === m.id ? raw.text : "Loading..."}</pre>
+          <pre class="selectable font-mono">{raw?.id === m.id ? raw.text : "Loading..."}</pre>
         {/if}
       {:else if tab === "headers"}
         <table class="selectable w-full border-collapse font-mono">
@@ -195,7 +192,7 @@
         </table>
       {:else}
         {#if !m.attachments.length}
-          <p class="m-0 p-4 text-center text-muted">No attachments.</p>
+          <p class="p-4 text-center text-muted">No attachments.</p>
         {/if}
         {#each m.attachments as a (a.index)}
           <div class="flex items-center gap-3 border-b border-line py-2">

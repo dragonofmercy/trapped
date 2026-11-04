@@ -8,11 +8,12 @@
 
   // Number input: bind:value gives null while the field is empty
   let port = $state<number | null>(null);
+  let saved = $state<number | null>(null);
   let error = $state("");
   let saving = $state(false);
   onMount(() => {
     getSmtpPort().then(
-      (p) => (port = p),
+      (p) => (port = saved = p),
       (e) => (error = String(e)),
     );
   });
@@ -20,36 +21,32 @@
   const invalid = $derived(port !== null && !(Number.isInteger(port) && port >= 1 && port <= 65535) ? "Port must be a number between 1 and 65535" : null);
 
   // Availability of the typed port, checked 300ms after the last keystroke; null while unknown
-  let availability = $state<{ port: number; state: "current" | "free" | "busy" | "error"; message?: string } | null>(null);
+  let availability = $state<{ state: "current" | "free" | "busy" | "error"; message?: string } | null>(null);
   $effect(() => {
     const p = port;
     availability = null;
     if (p === null || invalid !== null) return;
     const timer = setTimeout(() => {
       checkSmtpPort(p).then(
-        (state) => port === p && (availability = { port: p, state }),
-        (e) => port === p && (availability = { port: p, state: "error", message: String(e) }),
+        (state) => port === p && (availability = { state }),
+        (e) => port === p && (availability = { state: "error", message: String(e) }),
       );
     }, 300);
     return () => clearTimeout(timer);
   });
-  const dot = $derived(
-    availability?.state === "current"
-      ? { color: "bg-accent", tip: "Trapped is listening on this port" }
-      : availability?.state === "free"
-        ? { color: "bg-ok", tip: "Port is available" }
-        : availability?.state === "busy"
-          ? { color: "bg-danger", tip: "Port is already in use by another program" }
-          : availability?.state === "error"
-            ? { color: "bg-danger", tip: availability.message ?? "Port cannot be used" }
-            : { color: "bg-dim", tip: "Checking port" },
-  );
+  const DOTS = {
+    current: { color: "bg-accent", tip: "Trapped is listening on this port" },
+    free: { color: "bg-ok", tip: "Port is available" },
+    busy: { color: "bg-danger", tip: "Port is already in use by another program" },
+    error: { color: "bg-danger", tip: "Port cannot be used" },
+  };
+  const dot = $derived(availability ? { ...DOTS[availability.state], tip: availability.message ?? DOTS[availability.state].tip } : { color: "bg-dim", tip: "Checking port" });
   const busy = $derived(availability?.state === "busy" || availability?.state === "error");
 
-  // Laravel .env snippet: follows the port being typed while it is valid
+  // Laravel .env snippet: follows the port being typed while it is valid, else the saved one
   const env = $derived(`MAIL_MAILER=smtp
 MAIL_HOST=127.0.0.1
-MAIL_PORT=${invalid === null && port !== null ? port : 2525}
+MAIL_PORT=${invalid === null && port !== null ? port : (saved ?? "")}
 MAIL_USERNAME=Inbox-Name
 MAIL_PASSWORD=null
 MAIL_ENCRYPTION=null`);
@@ -78,9 +75,9 @@ MAIL_ENCRYPTION=null`);
   }
 </script>
 
-<Modal title="Options" width={150} {onclose}>
+<Modal title="Options" class="w-150" {onclose}>
   <form class="form" onsubmit={submit}>
-    <!-- Wallo options layout: one row per option (title + description, control on the right), rows separated by a border -->
+    <!-- One row per option (title + description, control on the right), rows separated by a border -->
     <div>
       <label class="option">
         <span class="text"><strong>SMTP port</strong><span>Port Trapped listens on, on 127.0.0.1 only. Default 2525.</span></span>
@@ -99,7 +96,7 @@ MAIL_ENCRYPTION=null`);
       <p>Laravel <code>.env</code>:</p>
       <div class="relative">
         <pre class="selectable">{env}</pre>
-        <button type="button" class="btn bare copy" data-tip={copied ? "Copied" : "Copy"} aria-label="Copy configuration" onclick={copyEnv}><Icon name={copied ? "check" : "copy"} /></button>
+        <button type="button" class="btn bare icon copy" data-tip={copied ? "Copied" : "Copy"} aria-label="Copy configuration" onclick={copyEnv}><Icon name={copied ? "check" : "copy"} /></button>
       </div>
     </div>
     <div class="buttons">
@@ -165,13 +162,5 @@ MAIL_ENCRYPTION=null`);
     position: absolute;
     top: calc(var(--spacing) * 1.5);
     right: calc(var(--spacing) * 1.5);
-    width: calc(var(--spacing) * 8);
-    height: calc(var(--spacing) * 8);
-    padding: 0;
-    justify-content: center;
-  }
-  .error {
-    margin: 0;
-    color: var(--danger);
   }
 </style>

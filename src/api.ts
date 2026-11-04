@@ -52,7 +52,6 @@ export const listMails = (inboxId: number, query: string) => invoke<MailRow[]>("
 export const getMail = (id: number) => invoke<MailDetail>("get_mail", { id });
 export const getRaw = (id: number) => invoke<string>("get_raw", { id });
 export const deleteMails = (ids: number[]) => invoke<void>("delete_mails", { ids });
-export const emptyInbox = (inboxId: number) => invoke<void>("empty_inbox", { inboxId });
 export const renameInbox = (inboxId: number, name: string) => invoke<void>("rename_inbox", { inboxId, name });
 export const createInbox = (name: string) => invoke<number>("create_inbox", { name });
 export const deleteInbox = (inboxId: number) => invoke<void>("delete_inbox", { inboxId });
@@ -66,3 +65,14 @@ export const saveAttachment = (mailId: number, index: number, path: string) => i
 
 export const onMailReceived = (cb: (inboxId: number) => void): Promise<UnlistenFn> => listen<{ inboxId: number }>("mail-received", (e) => cb(e.payload.inboxId));
 export const onSmtpStatus = (cb: (s: SmtpStatus) => void): Promise<UnlistenFn> => listen<SmtpStatus>("smtp-status", (e) => cb(e.payload));
+
+/** Starts a Tauri event subscription from a component; the returned cleanup also covers an unmount before listen() resolved */
+export function subscribe(listening: Promise<UnlistenFn>): () => void {
+  let dead = false;
+  let unlisten: UnlistenFn | undefined;
+  listening.then((u) => (dead ? u() : (unlisten = u)));
+  return () => {
+    dead = true;
+    unlisten?.();
+  };
+}
