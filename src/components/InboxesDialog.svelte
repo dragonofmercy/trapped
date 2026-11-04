@@ -65,7 +65,7 @@
     </div>
     {#if error}<p class="error selectable">{error}</p>{/if}
 
-    <div class="list mt-3 min-h-0 flex-1 overflow-y-auto">
+    <div class="list mt-3 rounded-md min-h-0 flex-1 overflow-y-auto">
       {#if !inboxes.length}
         <p class="m-0 py-4 text-center text-muted">No inbox. One is created on the first mail sent with a new username.</p>
       {:else if !shown.length}
@@ -140,7 +140,6 @@
   /* One card holding the list, rows separated by a border */
   .list {
     border: 1px solid var(--line);
-    border-radius: var(--radius-xl);
     background: linear-gradient(180deg, var(--card-a), var(--card-b));
   }
   .item {
