@@ -78,8 +78,8 @@
             <strong>{i.name}</strong>
             <span><b>{i.count}</b> {i.count === 1 ? "mail" : "mails"}{#if i.unread}<span class="sep"></span><b>{i.unread}</b> unread{/if}</span>
           </span>
-          <button type="button" class="btn square" title="Rename" aria-label={`Rename ${i.name}`} onclick={() => (naming = { inbox: i, error: "" })}><Icon name="pencil" /></button>
-          <button type="button" class="btn danger square" title="Delete" aria-label={`Delete ${i.name}`} onclick={() => (deleting = i)}><Icon name="trash" /></button>
+          <button type="button" class="btn square tip-left" data-tip="Rename" aria-label={`Rename ${i.name}`} onclick={() => (naming = { inbox: i, error: "" })}><Icon name="pencil" /></button>
+          <button type="button" class="btn danger square tip-left" data-tip="Delete" aria-label={`Delete ${i.name}`} onclick={() => (deleting = i)}><Icon name="trash" /></button>
         </div>
       {/each}
     </div>

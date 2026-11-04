@@ -267,6 +267,14 @@ dialog .buttons {
   animation: tip-in 0.15s 0.4s both;
 }
 
+/* Left of the element, for rows inside a scrolling list where a tooltip below would be clipped */
+.tip-left[data-tip]:hover::after {
+  top: 50%;
+  left: auto;
+  right: calc(100% + --spacing(1.5));
+  translate: 0 -50%;
+}
+
 @keyframes tip-in {
   from {
     opacity: 0;
