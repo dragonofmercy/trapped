@@ -32,6 +32,17 @@
     }, 300);
     return () => clearTimeout(timer);
   });
+  const dot = $derived(
+    availability?.state === "current"
+      ? { color: "bg-accent", tip: "Trapped is listening on this port" }
+      : availability?.state === "free"
+        ? { color: "bg-ok", tip: "Port is available" }
+        : availability?.state === "busy"
+          ? { color: "bg-danger", tip: "Port is already in use by another program" }
+          : availability?.state === "error"
+            ? { color: "bg-danger", tip: availability.message ?? "Port cannot be used" }
+            : { color: "bg-dim", tip: "Checking port" },
+  );
   const busy = $derived(availability?.state === "busy" || availability?.state === "error");
 
   async function submit(e: SubmitEvent) {
@@ -56,20 +67,14 @@
     <div>
       <label class="option">
         <span class="text"><strong>SMTP port</strong><span>Port Trapped listens on, on 127.0.0.1 only. Default 2525.</span></span>
-        <!-- svelte-ignore a11y_autofocus -->
-        <input class="field w-28 text-right" type="number" min="1" max="65535" autocomplete="off" bind:value={port} autofocus oninput={() => (error = "")} />
+        <!-- Availability dot: blue = Trapped's current port, green = free, red = in use or refused, grey = not checked yet -->
+        <span class="flex items-center gap-2">
+          <span class="size-2 shrink-0 rounded-full {dot.color}" data-tip={dot.tip} role="img" aria-label={dot.tip}></span>
+          <!-- svelte-ignore a11y_autofocus -->
+          <input class="field w-28 text-right" type="number" min="1" max="65535" autocomplete="off" bind:value={port} autofocus oninput={() => (error = "")} />
+        </span>
       </label>
-      {#if invalid || error}
-        <p class="error selectable">{invalid || error}</p>
-      {:else if availability?.state === "current"}
-        <p class="text-muted">Trapped is listening on this port.</p>
-      {:else if availability?.state === "free"}
-        <p class="text-ok">Port {availability.port} is available.</p>
-      {:else if availability?.state === "busy"}
-        <p class="error">Port {availability.port} is already in use by another program.</p>
-      {:else if availability?.state === "error"}
-        <p class="error selectable">{availability.message}</p>
-      {/if}
+      {#if invalid || error}<p class="error selectable">{invalid || error}</p>{/if}
     </div>
     <div class="buttons">
       <button type="button" class="btn ghost" onclick={onclose}>Cancel</button>
