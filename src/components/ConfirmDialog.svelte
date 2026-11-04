@@ -6,7 +6,7 @@
 
 <Modal {title} onclose={oncancel}>
   <div class="space-y-4">
-    <p class="m-0">{message}</p>
+    <p>{message}</p>
     <div class="buttons">
       <!-- Focus on Cancel: a reflex Enter must not confirm. -->
       <!-- svelte-ignore a11y_autofocus -->
