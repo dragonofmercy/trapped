@@ -57,8 +57,8 @@
     width: 100%;
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 0 10px 0 12px;
+    gap: calc(var(--spacing) * 2.5);
+    padding: 0 calc(var(--spacing) * 2.5) 0 calc(var(--spacing) * 3);
     cursor: pointer;
     text-align: left;
   }
@@ -71,13 +71,13 @@
   }
   .badge {
     font:
-      600 11px ui-monospace,
+      600 var(--text-xs) ui-monospace,
       Consolas,
       monospace;
     color: var(--muted);
     background: rgba(127, 127, 127, 0.14);
-    border-radius: 10px;
-    padding: 1px 8px;
+    border-radius: var(--radius-xl);
+    padding: calc(var(--spacing) * 0.25) calc(var(--spacing) * 2);
   }
   .caret {
     display: flex;
@@ -91,37 +91,37 @@
     position: absolute;
     z-index: 20;
     left: 0;
-    top: 38px;
-    max-width: calc(100vw - 32px);
+    top: calc(var(--spacing) * 9.5);
+    max-width: calc(100vw - calc(var(--spacing) * 8));
     max-height: 60vh;
     overflow-y: auto;
     min-width: 100%;
     width: max-content;
     margin: 0;
-    padding: 5px;
+    padding: calc(var(--spacing) * 1.25);
     list-style: none;
     background: var(--dialog-bg);
     border: 1px solid var(--line2);
-    border-radius: 10px;
+    border-radius: var(--radius-xl);
     box-shadow: 0 14px 34px rgba(0, 0, 0, 0.55);
   }
   ul.up {
     top: auto;
-    bottom: 38px;
+    bottom: calc(var(--spacing) * 9.5);
   }
   ul button {
     width: 100%;
     display: flex;
     align-items: center;
-    gap: 10px;
-    height: 32px;
-    padding: 0 10px;
+    gap: calc(var(--spacing) * 2.5);
+    height: calc(var(--spacing) * 8);
+    padding: 0 calc(var(--spacing) * 2.5);
     border: 0;
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     background: transparent;
     color: var(--text);
     font:
-      500 13px system-ui,
+      500 var(--text-sm) system-ui,
       sans-serif;
     cursor: pointer;
     white-space: nowrap;

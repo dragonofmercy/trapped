@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import "tailwindcss" theme(static);
 
 :root {
   --bg0: #091629;
@@ -65,7 +65,7 @@ body {
 }
 
 body {
-  font-size: 13px;
+  font-size: var(--text-sm);
 }
 
 #app {
@@ -90,8 +90,8 @@ dialog {
   background: var(--dialog-bg);
   color: var(--text);
   border: 1px solid var(--line2);
-  border-radius: 12px;
-  padding: 18px;
+  border-radius: var(--radius-xl);
+  padding: --spacing(4.5);
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
 }
 
@@ -102,7 +102,7 @@ dialog::backdrop {
 dialog .buttons {
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
+  gap: --spacing(2);
 }
 
 /* Checkbox, radio: <label class="chk"><input type="..."><span class="box"><svg/></span>Text</label> */
@@ -110,7 +110,7 @@ dialog .buttons {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: --spacing(2.5);
   width: fit-content;
   cursor: pointer;
   font-weight: 500;
@@ -119,15 +119,15 @@ dialog .buttons {
 .chk input {
   position: absolute;
   opacity: 0;
-  width: 1px;
-  height: 1px;
+  width: --spacing(0.25);
+  height: --spacing(0.25);
 }
 
 .box {
   position: relative;
-  width: 18px;
-  height: 18px;
-  border-radius: 5px;
+  width: --spacing(4.5);
+  height: --spacing(4.5);
+  border-radius: var(--radius-sm);
   border: 1px solid var(--line2);
   background: var(--field);
   display: flex;
@@ -138,8 +138,8 @@ dialog .buttons {
 }
 
 .box svg {
-  width: 12px;
-  height: 12px;
+  width: --spacing(3);
+  height: --spacing(3);
   stroke: #fff;
   fill: none;
   stroke-width: 2.6;
@@ -173,9 +173,9 @@ dialog .buttons {
 
 .chk input:indeterminate + .box::before {
   content: "";
-  width: 9px;
-  height: 2px;
-  border-radius: 1px;
+  width: --spacing(2.25);
+  height: --spacing(0.5);
+  border-radius: var(--radius-xs);
   background: #fff;
 }
 
@@ -194,20 +194,20 @@ dialog .buttons {
   display: inline-grid;
   grid-auto-flow: column;
   grid-auto-columns: 1fr;
-  padding: 2px;
+  padding: --spacing(0.5);
   border: 1px solid var(--line2);
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
   background: var(--field);
 }
 
 .seg::before {
   content: "";
   position: absolute;
-  top: 2px;
-  bottom: 2px;
-  left: 2px;
-  width: calc((100% - 4px) / var(--n));
-  border-radius: 6px;
+  top: --spacing(0.5);
+  bottom: --spacing(0.5);
+  left: --spacing(0.5);
+  width: calc((100% - --spacing(1)) / var(--n));
+  border-radius: var(--radius-md);
   background: var(--accent);
   transform: translateX(calc(100% * var(--i)));
   transition: transform 0.2s ease;
@@ -218,14 +218,14 @@ dialog .buttons {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  height: 26px;
-  padding: 0 12px;
+  gap: --spacing(1.5);
+  height: --spacing(6.5);
+  padding: 0 --spacing(3);
   border: 0;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
   background: transparent;
   color: var(--muted);
-  font: 500 13px system-ui, sans-serif;
+  font: 500 var(--text-sm) system-ui, sans-serif;
   cursor: pointer;
   transition: color 0.2s;
 }
@@ -249,8 +249,8 @@ dialog .buttons {
 
 .chk.radio .box::after {
   content: "";
-  width: 8px;
-  height: 8px;
+  width: --spacing(2);
+  height: --spacing(2);
   border-radius: 50%;
   background: #fff;
   opacity: 0;
@@ -266,10 +266,10 @@ dialog .buttons {
 @layer components {
   /* In the components layer so Tailwind utilities (m-0, mr-auto...) can override them */
   dialog h2 {
-    margin: 0 0 12px;
+    margin: 0 0 --spacing(3);
     font-family: system-ui, sans-serif;
     font-weight: 600;
-    font-size: 11.5px;
+    font-size: var(--text-xs);
     letter-spacing: 0.09em;
     text-transform: uppercase;
     color: var(--cyan);
@@ -277,20 +277,20 @@ dialog .buttons {
 
   dialog .error {
     color: var(--danger);
-    margin: 10px 0 0;
+    margin: --spacing(2.5) 0 0;
   }
 
   /* Form layout: <form class="form"> rows spaced vertically, each <div class="form-row"> = field + its error */
   .form {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: --spacing(4);
   }
 
   .form-row {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: --spacing(1);
   }
 
   .form-row .error {
@@ -301,7 +301,7 @@ dialog .buttons {
   .label {
     font-family: system-ui, sans-serif;
     font-weight: 600;
-    font-size: 11.5px;
+    font-size: var(--text-xs);
     letter-spacing: 0.09em;
     text-transform: uppercase;
     color: var(--cyan);
@@ -311,21 +311,21 @@ dialog .buttons {
     position: relative;
     background: linear-gradient(180deg, var(--card-a), var(--card-b));
     border: 1px solid var(--line);
-    border-radius: 12px;
-    padding: 14px 16px;
+    border-radius: var(--radius-xl);
+    padding: --spacing(3.5) --spacing(4);
   }
 
   .btn {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    height: 34px;
-    padding: 0 14px;
-    border-radius: 8px;
+    gap: --spacing(2);
+    height: --spacing(8.5);
+    padding: 0 --spacing(3.5);
+    border-radius: var(--radius-lg);
     border: 1px solid var(--line2);
     background: var(--btn-bg);
     color: var(--text);
-    font: 600 13px system-ui, sans-serif;
+    font: 600 var(--text-sm) system-ui, sans-serif;
     cursor: pointer;
     white-space: nowrap;
     transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
@@ -383,13 +383,13 @@ dialog .buttons {
   }
 
   .field {
-    height: 34px;
-    padding: 0 12px;
-    border-radius: 8px;
+    height: --spacing(8.5);
+    padding: 0 --spacing(3);
+    border-radius: var(--radius-lg);
     border: 1px solid var(--line);
     background: var(--field);
     color: var(--text);
-    font: 500 13px system-ui, sans-serif;
+    font: 500 var(--text-sm) system-ui, sans-serif;
     transition: border-color 0.15s, box-shadow 0.15s;
   }
 

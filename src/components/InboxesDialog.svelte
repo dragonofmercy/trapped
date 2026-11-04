@@ -53,8 +53,8 @@
   }
 </script>
 
-<Modal title="Inboxes" width={600} {onclose}>
-  <div class="flex h-[400px] flex-col">
+<Modal title="Inboxes" width={150} {onclose}>
+  <div class="flex h-[calc(var(--spacing) * 100)] flex-col">
     <!-- Search on the left, add on the right (Definitive Mod Manager layout) -->
     <div class="flex items-center gap-2">
       <label class="field search">
@@ -110,7 +110,7 @@
 
 <style>
   .square {
-    width: 34px;
+    width: calc(var(--spacing) * 8.5);
     padding: 0;
     justify-content: center;
   }
@@ -118,8 +118,8 @@
     flex: 1;
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 0 12px;
+    gap: calc(var(--spacing) * 2.5);
+    padding: 0 calc(var(--spacing) * 3);
     color: var(--muted);
     cursor: text;
   }
@@ -140,14 +140,14 @@
   /* One card holding the list, rows separated by a border */
   .list {
     border: 1px solid var(--line);
-    border-radius: 10px;
+    border-radius: var(--radius-xl);
     background: linear-gradient(180deg, var(--card-a), var(--card-b));
   }
   .item {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 10px 12px;
+    gap: calc(var(--spacing) * 3);
+    padding: calc(var(--spacing) * 2.5) calc(var(--spacing) * 3);
   }
   .item + .item {
     border-top: 1px solid var(--line);
@@ -156,10 +156,10 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 34px;
-    height: 34px;
+    width: calc(var(--spacing) * 8.5);
+    height: calc(var(--spacing) * 8.5);
     flex-shrink: 0;
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     color: var(--cyan);
     background: rgba(var(--accent-rgb), 0.12);
   }
@@ -168,7 +168,7 @@
     min-width: 0;
     display: flex;
     flex-direction: column;
-    gap: 3px;
+    gap: calc(var(--spacing) * 0.75);
   }
   .text strong {
     font-weight: 600;
@@ -185,6 +185,6 @@
   }
   .sep {
     display: inline-block;
-    width: 14px;
+    width: calc(var(--spacing) * 3.5);
   }
 </style>

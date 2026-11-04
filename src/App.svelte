@@ -53,7 +53,7 @@
 
 <div class="flex h-full flex-col gap-3 p-3">
   <TopBar {inboxes} {currentInboxId} onselect={select} onmanage={() => (showInboxes = true)} />
-  <div class="grid min-h-0 flex-1 grid-cols-[360px_1fr] gap-3">
+  <div class="grid min-h-0 flex-1 grid-cols-[calc(var(--spacing)*90)_1fr] gap-3">
     <MailList inboxId={currentInboxId} selectedId={selectedMailId} refreshKey={listKey} onselect={(id) => (selectedMailId = id)} onchanged={listChanged} />
     <MailView
       mailId={selectedMailId}

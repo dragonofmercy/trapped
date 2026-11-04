@@ -42,7 +42,7 @@
 
 <div class="card flex items-center gap-3 p-3">
   <div class="w-72"><Select label="Inbox" bind:value={() => currentInboxId, (v) => onselect(v)} {options} icon={inboxIcon} /></div>
-  <button type="button" class="btn w-[34px] justify-center p-0" title="Manage inboxes" aria-label="Manage inboxes" onclick={onmanage}><Icon name="gear" /></button>
+  <button type="button" class="btn w-8.5 justify-center p-0" title="Manage inboxes" aria-label="Manage inboxes" onclick={onmanage}><Icon name="gear" /></button>
 
   <div class="ml-auto flex items-center gap-2">
     {#if status?.listening}
