@@ -50,7 +50,7 @@ pub fn run() {
             let data = app.path().app_data_dir()?;
             std::fs::create_dir_all(&data)?;
             let db = db::Db::open(&data.join("trapped.db"))?;
-            let port = db.smtp_port()?;
+            let (host, port) = (db.smtp_host()?, db.smtp_port()?);
             app.manage::<DbState>(Mutex::new(db));
 
             let attachments = app.path().app_cache_dir()?.join("attachments");
@@ -58,7 +58,7 @@ pub fn run() {
             std::fs::create_dir_all(&attachments)?;
 
             let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel();
-            let smtp = tauri::async_runtime::block_on(commands::Smtp::start(tx.clone(), port));
+            let smtp = tauri::async_runtime::block_on(commands::Smtp::start(tx.clone(), host, port));
             app.manage::<SmtpState>(tokio::sync::Mutex::new(smtp));
             app.manage(SmtpTx(tx));
             let handle = app.handle().clone();
@@ -108,8 +108,8 @@ pub fn run() {
             commands::delete_mails,
             commands::rename_inbox,
             commands::create_inbox,
-            commands::get_smtp_port,
-            commands::set_smtp_port,
+            commands::get_smtp_config,
+            commands::set_smtp_config,
             commands::check_smtp_port,
             commands::delete_inbox,
             commands::smtp_status,

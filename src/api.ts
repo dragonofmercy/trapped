@@ -58,9 +58,11 @@ export const createInbox = (name: string) => invoke<number>("create_inbox", { na
 export const deleteInbox = (inboxId: number) => invoke<void>("delete_inbox", { inboxId });
 export const smtpStatus = () => invoke<SmtpStatus>("smtp_status");
 export const smtpRetry = () => invoke<SmtpStatus>("smtp_retry");
-export const getSmtpPort = () => invoke<number>("get_smtp_port");
-export const checkSmtpPort = (port: number) => invoke<"current" | "free" | "busy">("check_smtp_port", { port });
-export const setSmtpPort = (port: number) => invoke<SmtpStatus>("set_smtp_port", { port });
+/** 127.0.0.1: this machine only. 0.0.0.0: every network interface, reachable from other machines */
+export type SmtpHost = "127.0.0.1" | "0.0.0.0";
+export const getSmtpConfig = () => invoke<{ host: SmtpHost; port: number }>("get_smtp_config");
+export const checkSmtpPort = (host: SmtpHost, port: number) => invoke<"current" | "free" | "busy">("check_smtp_port", { host, port });
+export const setSmtpConfig = (host: SmtpHost, port: number) => invoke<SmtpStatus>("set_smtp_config", { host, port });
 export const openAttachment = (mailId: number, index: number) => invoke<void>("open_attachment", { mailId, index });
 export const saveAttachment = (mailId: number, index: number, path: string) => invoke<void>("save_attachment", { mailId, index, path });
 

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { checkSmtpPort, getSmtpPort, setSmtpPort } from "../api";
+  import { checkSmtpPort, getSmtpConfig, setSmtpConfig, type SmtpHost } from "../api";
   import Icon from "./Icon.svelte";
   import Modal from "./Modal.svelte";
   import ModalFooter from "./ModalFooter.svelte";
@@ -10,11 +10,19 @@
   // Number input: bind:value gives null while the field is empty
   let port = $state<number | null>(null);
   let saved = $state<number | null>(null);
+  let host = $state<SmtpHost>("127.0.0.1");
+  const HOSTS: { value: SmtpHost; label: string }[] = [
+    { value: "127.0.0.1", label: "This machine" },
+    { value: "0.0.0.0", label: "All interfaces" },
+  ];
   let error = $state("");
   let saving = $state(false);
   onMount(() => {
-    getSmtpPort().then(
-      (p) => (port = saved = p),
+    getSmtpConfig().then(
+      (c) => {
+        port = saved = c.port;
+        host = c.host;
+      },
       (e) => (error = String(e)),
     );
   });
@@ -25,10 +33,11 @@
   let availability = $state<{ state: "current" | "free" | "busy" | "error"; message?: string } | null>(null);
   $effect(() => {
     const p = port;
+    const h = host;
     availability = null;
     if (p === null || invalid !== null) return;
     const timer = setTimeout(() => {
-      checkSmtpPort(p).then(
+      checkSmtpPort(h, p).then(
         (state) => port === p && (availability = { state }),
         (e) => port === p && (availability = { state: "error", message: String(e) }),
       );
@@ -46,7 +55,7 @@
 
   // Laravel .env snippet: follows the port being typed while it is valid, else the saved one
   const env = $derived(`MAIL_MAILER=smtp
-MAIL_HOST=127.0.0.1
+MAIL_HOST=${host === "0.0.0.0" ? "<this machine's IP>" : "127.0.0.1"}
 MAIL_PORT=${invalid === null && port !== null ? port : (saved ?? "")}
 MAIL_USERNAME=Inbox-Name
 MAIL_PASSWORD=null
@@ -66,7 +75,7 @@ MAIL_ENCRYPTION=null`);
     saving = true;
     error = "";
     try {
-      await setSmtpPort(port);
+      await setSmtpConfig(host, port);
       onclose();
     } catch (err) {
       error = String(err);
@@ -81,7 +90,7 @@ MAIL_ENCRYPTION=null`);
     <!-- One row per option (title + description, control on the right), rows separated by a border -->
     <div>
       <label class="option">
-        <span class="text"><strong>SMTP port</strong><span>Port Trapped listens on, on 127.0.0.1 only. Default 2525.</span></span>
+        <span class="text"><strong>SMTP port</strong><span>Port Trapped listens on. Default 2525.</span></span>
         <!-- Availability dot: blue = Trapped's current port, green = free, red = in use or refused, grey = not checked yet -->
         <span class="flex items-center gap-2">
           <span class="size-2 shrink-0 rounded-full {dot.color}" data-tip={dot.tip} role="img" aria-label={dot.tip}></span>
@@ -90,6 +99,17 @@ MAIL_ENCRYPTION=null`);
         </span>
       </label>
       {#if invalid || error}<p class="error selectable">{invalid || error}</p>{/if}
+      <div class="option">
+        <span class="text">
+          <strong>Listen address</strong>
+          <span>{host === "0.0.0.0" ? "0.0.0.0: any machine on the network can send mail to Trapped. Windows may ask to allow it through the firewall." : "127.0.0.1: only programs on this machine can send mail to Trapped."}</span>
+        </span>
+        <div class="seg" style="--n: 2; --i: {HOSTS.findIndex((h) => h.value === host)}">
+          {#each HOSTS as h (h.value)}
+            <button type="button" aria-pressed={host === h.value} onclick={() => ((host = h.value), (error = ""))}>{h.label}</button>
+          {/each}
+        </div>
+      </div>
     </div>
     <!-- Setup help -->
     <div class="help space-y-2">

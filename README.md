@@ -1,6 +1,6 @@
 # Trapped
 
-Desktop mail catcher (Tauri 2 + Svelte 5). It listens for SMTP on `127.0.0.1:2525` (port configurable in Options), accepts every message, never relays, and shows what it caught. Closing the window hides it to the tray.
+Desktop mail catcher (Tauri 2 + Svelte 5). It listens for SMTP on `127.0.0.1:2525` (port and listen address configurable in Options; `0.0.0.0` accepts mail from other machines, then use this machine's IP as `MAIL_HOST`), accepts every message, never relays, and shows what it caught. Closing the window hides it to the tray.
 
 ## Laravel setup
 

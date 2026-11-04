@@ -1,11 +1,31 @@
 use crate::parse::Summary;
 use rusqlite::{Connection, OptionalExtension, params};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
+use std::net::Ipv4Addr;
 use std::path::Path;
 
 /// Created on first launch, and used for mail sent without a username. A normal inbox otherwise.
 pub const DEFAULT_INBOX: &str = "Inbox-Name";
 pub const DEFAULT_SMTP_PORT: u16 = 2525;
+
+/// Address the SMTP listener binds: this machine only, or every network interface (mail from other machines, e.g. a shared Docker host)
+#[derive(Serialize, Deserialize, Clone, Copy, PartialEq, Eq, Debug, Default)]
+pub enum SmtpHost {
+    #[default]
+    #[serde(rename = "127.0.0.1")]
+    Local,
+    #[serde(rename = "0.0.0.0")]
+    All,
+}
+
+impl SmtpHost {
+    pub fn ip(self) -> Ipv4Addr {
+        match self {
+            SmtpHost::Local => Ipv4Addr::LOCALHOST,
+            SmtpHost::All => Ipv4Addr::UNSPECIFIED,
+        }
+    }
+}
 
 #[derive(Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -88,14 +108,29 @@ impl Db {
         Ok(Db { conn })
     }
 
+    fn setting(&self, key: &str) -> rusqlite::Result<Option<String>> {
+        self.conn.query_row("SELECT value FROM settings WHERE key = ?1", [key], |r| r.get(0)).optional()
+    }
+
+    fn set_setting(&self, key: &str, value: &str) -> rusqlite::Result<()> {
+        self.conn.execute("INSERT INTO settings (key, value) VALUES (?1, ?2) ON CONFLICT(key) DO UPDATE SET value = excluded.value", [key, value])?;
+        Ok(())
+    }
+
     pub fn smtp_port(&self) -> rusqlite::Result<u16> {
-        let v: Option<String> = self.conn.query_row("SELECT value FROM settings WHERE key = 'smtp_port'", [], |r| r.get(0)).optional()?;
-        Ok(v.and_then(|v| v.parse().ok()).filter(|&p| p != 0).unwrap_or(DEFAULT_SMTP_PORT))
+        Ok(self.setting("smtp_port")?.and_then(|v| v.parse().ok()).filter(|&p| p != 0).unwrap_or(DEFAULT_SMTP_PORT))
     }
 
     pub fn set_smtp_port(&self, port: u16) -> rusqlite::Result<()> {
-        self.conn.execute("INSERT INTO settings (key, value) VALUES ('smtp_port', ?1) ON CONFLICT(key) DO UPDATE SET value = excluded.value", [port.to_string()])?;
-        Ok(())
+        self.set_setting("smtp_port", &port.to_string())
+    }
+
+    pub fn smtp_host(&self) -> rusqlite::Result<SmtpHost> {
+        Ok(if self.setting("smtp_host")?.as_deref() == Some("0.0.0.0") { SmtpHost::All } else { SmtpHost::Local })
+    }
+
+    pub fn set_smtp_host(&self, host: SmtpHost) -> rusqlite::Result<()> {
+        self.set_setting("smtp_host", &host.ip().to_string())
     }
 
     pub fn inbox_id(&self, name: &str) -> rusqlite::Result<i64> {
@@ -244,6 +279,16 @@ mod tests {
         db.set_smtp_port(2526).unwrap();
         db.set_smtp_port(1025).unwrap();
         assert_eq!(db.smtp_port().unwrap(), 1025);
+    }
+
+    #[test]
+    fn smtp_host_setting() {
+        let db = Db::open_in_memory().unwrap();
+        assert_eq!(db.smtp_host().unwrap(), SmtpHost::Local);
+        db.set_smtp_host(SmtpHost::All).unwrap();
+        assert_eq!(db.smtp_host().unwrap(), SmtpHost::All);
+        db.set_smtp_host(SmtpHost::Local).unwrap();
+        assert_eq!(db.smtp_host().unwrap(), SmtpHost::Local);
     }
 
     #[test]

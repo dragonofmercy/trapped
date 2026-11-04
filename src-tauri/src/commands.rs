@@ -1,4 +1,4 @@
-use crate::db::{Db, InboxRow, MailRow};
+use crate::db::{Db, InboxRow, MailRow, SmtpHost};
 use crate::{parse, smtp};
 use serde::Serialize;
 use std::num::NonZeroU16;
@@ -15,6 +15,7 @@ pub type SmtpState = tokio::sync::Mutex<Smtp>;
 /// The running SMTP listener (if any) and its status as shown in the UI
 pub struct Smtp {
     pub status: SmtpStatus,
+    host: SmtpHost,
     port: u16,
     task: Option<tauri::async_runtime::JoinHandle<()>>,
 }
@@ -24,8 +25,8 @@ pub fn lock(db: &DbState) -> MutexGuard<'_, Db> {
     db.lock().unwrap_or_else(|p| p.into_inner())
 }
 
-fn address(port: u16) -> String {
-    format!("127.0.0.1:{port}")
+fn address(host: SmtpHost, port: u16) -> String {
+    format!("{}:{port}", host.ip())
 }
 pub struct SmtpTx(pub UnboundedSender<smtp::Received>);
 
@@ -71,20 +72,22 @@ pub fn is_blocked_extension(name: &str) -> bool {
     name.trim_end_matches(['.', ' ']).rsplit_once('.').is_some_and(|(_, ext)| BLOCKED.contains(&ext.to_ascii_lowercase().as_str()))
 }
 
-fn bind_error(port: u16, err: std::io::Error) -> String {
+fn bind_error(host: SmtpHost, port: u16, err: std::io::Error) -> String {
     if err.kind() == std::io::ErrorKind::AddrInUse {
         format!("Port {port} is already in use (is another SMTP catcher like smtp4dev running?)")
     } else {
-        format!("Cannot listen on {}: {err}", address(port))
+        format!("Cannot listen on {}: {err}", address(host, port))
     }
 }
 
-/// Binds 127.0.0.1:port. Windows lets a socket on 127.0.0.1 coexist with another program listening on all interfaces
+/// Binds host:port. On 127.0.0.1, Windows lets the socket coexist with another program listening on all interfaces
 /// (Apache on 0.0.0.0:80), and the more specific bind would silently steal its local traffic. So the wildcard addresses
-/// are probed first, with a bind and no listen (no firewall prompt).
-async fn bind_local(port: u16) -> std::io::Result<TcpListener> {
+/// are probed first, with a bind and no listen (no firewall prompt). On 0.0.0.0 the bind itself catches the IPv4 conflicts.
+async fn bind(host: SmtpHost, port: u16) -> std::io::Result<TcpListener> {
     use std::net::{Ipv4Addr, Ipv6Addr, SocketAddr};
-    tokio::net::TcpSocket::new_v4()?.bind(SocketAddr::from((Ipv4Addr::UNSPECIFIED, port)))?;
+    if host == SmtpHost::Local {
+        tokio::net::TcpSocket::new_v4()?.bind(SocketAddr::from((Ipv4Addr::UNSPECIFIED, port)))?;
+    }
     // A missing IPv6 stack is not a conflict, only an IPv6 listener on the port is
     if let Ok(v6) = tokio::net::TcpSocket::new_v6()
         && let Err(err) = v6.bind(SocketAddr::from((Ipv6Addr::UNSPECIFIED, port)))
@@ -92,55 +95,77 @@ async fn bind_local(port: u16) -> std::io::Result<TcpListener> {
     {
         return Err(err);
     }
-    TcpListener::bind((Ipv4Addr::LOCALHOST, port)).await
+    TcpListener::bind((host.ip(), port)).await
 }
 
 impl Smtp {
-    /// Serves on 127.0.0.1:port, replacing the previous listener. When the bind fails the previous listener (if any) keeps running.
-    async fn listen(&mut self, tx: UnboundedSender<smtp::Received>, port: u16) -> Result<(), String> {
-        let listener = bind_local(port).await.map_err(|err| bind_error(port, err))?;
+    /// Serves on host:port, replacing the previous listener. When the bind fails the previous listener (if any) keeps running.
+    async fn listen(&mut self, tx: UnboundedSender<smtp::Received>, host: SmtpHost, port: u16) -> Result<(), String> {
+        // Same port on another address: our own listener would make the new bind fail, so it is stopped first and restored on failure
+        let same_port = self.task.is_some() && self.port == port;
+        if same_port && let Some(task) = self.task.take() {
+            task.abort();
+            let _ = task.await;
+        }
+        let listener = match bind(host, port).await {
+            Ok(listener) => listener,
+            Err(err) => {
+                if same_port {
+                    match bind(self.host, self.port).await {
+                        Ok(old) => self.task = Some(tauri::async_runtime::spawn(smtp::serve(old, tx))),
+                        Err(old) => {
+                            self.status = SmtpStatus {
+                                listening: false,
+                                address: address(self.host, self.port),
+                                error: Some(bind_error(self.host, self.port, old)),
+                            }
+                        }
+                    }
+                }
+                return Err(bind_error(host, port, err));
+            }
+        };
         if let Some(task) = self.task.take() {
             task.abort();
         }
         self.task = Some(tauri::async_runtime::spawn(smtp::serve(listener, tx)));
+        self.host = host;
         self.port = port;
         self.status = SmtpStatus {
             listening: true,
-            address: address(port),
+            address: address(host, port),
             error: None,
         };
         Ok(())
     }
 
     /// Start or retry: a failed bind is reported through the status (the UI offers Retry)
-    async fn listen_or_report(&mut self, tx: UnboundedSender<smtp::Received>, port: u16) {
-        if let Err(err) = self.listen(tx, port).await {
+    async fn listen_or_report(&mut self, tx: UnboundedSender<smtp::Received>, host: SmtpHost, port: u16) {
+        if let Err(err) = self.listen(tx, host, port).await {
+            self.host = host;
             self.port = port;
             self.status = SmtpStatus {
                 listening: false,
-                address: address(port),
+                address: address(host, port),
                 error: Some(err),
             };
         }
     }
 
-    pub async fn start(tx: UnboundedSender<smtp::Received>, port: u16) -> Smtp {
+    pub async fn start(tx: UnboundedSender<smtp::Received>, host: SmtpHost, port: u16) -> Smtp {
         let mut smtp = Smtp {
             status: SmtpStatus {
                 listening: false,
-                address: address(port),
+                address: address(host, port),
                 error: None,
             },
+            host,
             port,
             task: None,
         };
-        smtp.listen_or_report(tx, port).await;
+        smtp.listen_or_report(tx, host, port).await;
         smtp
     }
-}
-
-fn e<T: ToString>(err: T) -> String {
-    err.to_string()
 }
 
 #[tauri::command]
@@ -221,45 +246,61 @@ pub async fn smtp_retry(app: AppHandle) -> Result<SmtpStatus, String> {
     let state = app.state::<SmtpState>();
     let mut smtp = state.lock().await;
     if !smtp.status.listening {
-        let port = smtp.port;
-        smtp.listen_or_report(app.state::<SmtpTx>().0.clone(), port).await;
+        let (host, port) = (smtp.host, smtp.port);
+        smtp.listen_or_report(app.state::<SmtpTx>().0.clone(), host, port).await;
         let _ = app.emit("smtp-status", smtp.status.clone());
     }
     Ok(smtp.status.clone())
 }
 
+fn e<T: ToString>(err: T) -> String {
+    err.to_string()
+}
+
+#[derive(Serialize)]
+pub struct SmtpConfig {
+    host: SmtpHost,
+    port: u16,
+}
+
 #[tauri::command]
-pub async fn get_smtp_port(smtp: State<'_, SmtpState>) -> Result<u16, String> {
-    Ok(smtp.lock().await.port)
+pub async fn get_smtp_config(smtp: State<'_, SmtpState>) -> Result<SmtpConfig, String> {
+    let smtp = smtp.lock().await;
+    Ok(SmtpConfig { host: smtp.host, port: smtp.port })
 }
 
 /// Tells the Options modal whether a port can be used: "current" (Trapped already listens on it), "free" or "busy".
 /// Other bind failures (e.g. a port reserved by Windows) come back as an error message.
 #[tauri::command]
-pub async fn check_smtp_port(smtp: State<'_, SmtpState>, port: NonZeroU16) -> Result<&'static str, String> {
+pub async fn check_smtp_port(smtp: State<'_, SmtpState>, host: SmtpHost, port: NonZeroU16) -> Result<&'static str, String> {
     let port = port.get();
     let current = smtp.lock().await;
     if current.status.listening && current.port == port {
         return Ok("current");
     }
     drop(current);
-    match bind_local(port).await {
+    match bind(host, port).await {
         Ok(_) => Ok("free"),
         Err(err) if err.kind() == std::io::ErrorKind::AddrInUse => Ok("busy"),
-        Err(err) => Err(bind_error(port, err)),
+        Err(err) => Err(bind_error(host, port, err)),
     }
 }
 
-/// Moves the listener to the new port, then saves it. A failed bind leaves both the listener and the saved port unchanged.
+/// Moves the listener to the new address, then saves it. A failed bind leaves the saved address unchanged, and the listener too
+/// unless it had to be stopped (same port) and could not be restored.
 #[tauri::command]
-pub async fn set_smtp_port(app: AppHandle, port: NonZeroU16) -> Result<SmtpStatus, String> {
+pub async fn set_smtp_config(app: AppHandle, host: SmtpHost, port: NonZeroU16) -> Result<SmtpStatus, String> {
     let port = port.get();
     let state = app.state::<SmtpState>();
     let mut smtp = state.lock().await;
-    if !(smtp.status.listening && smtp.port == port) {
-        smtp.listen(app.state::<SmtpTx>().0.clone(), port).await?;
-        lock(&app.state::<DbState>()).set_smtp_port(port).map_err(e)?;
+    if !(smtp.status.listening && smtp.host == host && smtp.port == port) {
+        let result = smtp.listen(app.state::<SmtpTx>().0.clone(), host, port).await;
         let _ = app.emit("smtp-status", smtp.status.clone());
+        result?;
+        let db = app.state::<DbState>();
+        let db = lock(&db);
+        db.set_smtp_host(host).map_err(e)?;
+        db.set_smtp_port(port).map_err(e)?;
     }
     Ok(smtp.status.clone())
 }
