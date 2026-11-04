@@ -3,7 +3,7 @@ mod db;
 mod parse;
 mod smtp;
 
-use commands::{DbState, SmtpTx, StatusState};
+use commands::{DbState, SmtpState, SmtpTx};
 use serde::Serialize;
 use std::sync::Mutex;
 use tauri::menu::{Menu, MenuItem};
@@ -46,15 +46,17 @@ pub fn run() {
         .setup(|app| {
             let data = app.path().app_data_dir()?;
             std::fs::create_dir_all(&data)?;
-            app.manage::<DbState>(Mutex::new(db::Db::open(&data.join("trapped.db"))?));
+            let db = db::Db::open(&data.join("trapped.db"))?;
+            let port = db.smtp_port()?;
+            app.manage::<DbState>(Mutex::new(db));
 
             let attachments = app.path().app_cache_dir()?.join("attachments");
             let _ = std::fs::remove_dir_all(&attachments);
             std::fs::create_dir_all(&attachments)?;
 
             let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel();
-            let status = tauri::async_runtime::block_on(commands::start_smtp(tx.clone()));
-            app.manage::<StatusState>(Mutex::new(status));
+            let smtp = tauri::async_runtime::block_on(commands::Smtp::start(tx.clone(), port));
+            app.manage::<SmtpState>(tokio::sync::Mutex::new(smtp));
             app.manage(SmtpTx(tx));
             let handle = app.handle().clone();
             tauri::async_runtime::spawn(async move {
@@ -101,6 +103,8 @@ pub fn run() {
             commands::empty_inbox,
             commands::rename_inbox,
             commands::create_inbox,
+            commands::get_smtp_port,
+            commands::set_smtp_port,
             commands::delete_inbox,
             commands::smtp_status,
             commands::smtp_retry,

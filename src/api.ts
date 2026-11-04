@@ -58,6 +58,8 @@ export const createInbox = (name: string) => invoke<number>("create_inbox", { na
 export const deleteInbox = (inboxId: number) => invoke<void>("delete_inbox", { inboxId });
 export const smtpStatus = () => invoke<SmtpStatus>("smtp_status");
 export const smtpRetry = () => invoke<SmtpStatus>("smtp_retry");
+export const getSmtpPort = () => invoke<number>("get_smtp_port");
+export const setSmtpPort = (port: number) => invoke<SmtpStatus>("set_smtp_port", { port });
 export const openAttachment = (mailId: number, index: number) => invoke<void>("open_attachment", { mailId, index });
 export const saveAttachment = (mailId: number, index: number, path: string) => invoke<void>("save_attachment", { mailId, index, path });
 

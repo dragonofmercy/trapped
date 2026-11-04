@@ -3,7 +3,6 @@ use tokio::io::{AsyncBufReadExt, AsyncRead, AsyncWrite, AsyncWriteExt, BufReader
 use tokio::net::TcpListener;
 use tokio::sync::mpsc::UnboundedSender;
 
-pub const ADDR: &str = "127.0.0.1:2525";
 pub const MAX_SIZE: usize = 52_428_800;
 
 pub struct Received {

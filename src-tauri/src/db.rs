@@ -5,6 +5,7 @@ use std::path::Path;
 
 /// Created on first launch, and used for mail sent without a username. A normal inbox otherwise.
 pub const DEFAULT_INBOX: &str = "Inbox-Name";
+pub const DEFAULT_SMTP_PORT: u16 = 2525;
 
 #[derive(Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -54,6 +55,7 @@ CREATE TABLE IF NOT EXISTS mails (
 );
 CREATE TABLE IF NOT EXISTS raws (mail_id INTEGER PRIMARY KEY REFERENCES mails(id) ON DELETE CASCADE, raw BLOB NOT NULL);
 CREATE INDEX IF NOT EXISTS idx_mails_inbox ON mails(inbox_id, received_at);
+CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 ";
 
 fn json_list(s: String) -> Vec<String> {
@@ -82,6 +84,16 @@ impl Db {
             conn.pragma_update(None, "user_version", 1)?;
         }
         Ok(Db { conn })
+    }
+
+    pub fn smtp_port(&self) -> rusqlite::Result<u16> {
+        let v: Option<String> = self.conn.query_row("SELECT value FROM settings WHERE key = 'smtp_port'", [], |r| r.get(0)).optional()?;
+        Ok(v.and_then(|v| v.parse().ok()).filter(|&p| p != 0).unwrap_or(DEFAULT_SMTP_PORT))
+    }
+
+    pub fn set_smtp_port(&self, port: u16) -> rusqlite::Result<()> {
+        self.conn.execute("INSERT INTO settings (key, value) VALUES ('smtp_port', ?1) ON CONFLICT(key) DO UPDATE SET value = excluded.value", [port.to_string()])?;
+        Ok(())
     }
 
     pub fn inbox_id(&self, name: &str) -> rusqlite::Result<i64> {
@@ -224,6 +236,15 @@ mod tests {
             has_attachments: false,
             search_text: search.into(),
         }
+    }
+
+    #[test]
+    fn smtp_port_setting() {
+        let db = Db::open_in_memory().unwrap();
+        assert_eq!(db.smtp_port().unwrap(), DEFAULT_SMTP_PORT);
+        db.set_smtp_port(2526).unwrap();
+        db.set_smtp_port(1025).unwrap();
+        assert_eq!(db.smtp_port().unwrap(), 1025);
     }
 
     #[test]

@@ -4,7 +4,7 @@
   import Icon from "./Icon.svelte";
   import Select from "./Select.svelte";
 
-  let { inboxes, currentInboxId, onselect, onmanage }: { inboxes: Inbox[]; currentInboxId: number; onselect: (id: number) => void; onmanage: () => void } = $props();
+  let { inboxes, currentInboxId, onselect, onmanage, onoptions }: { inboxes: Inbox[]; currentInboxId: number; onselect: (id: number) => void; onmanage: () => void; onoptions: () => void } = $props();
 
   const options = $derived(inboxes.map((i) => ({ value: i.id, label: i.name, badge: i.count })));
 
@@ -54,4 +54,5 @@
       <button type="button" class="btn" disabled={retrying} onclick={retry}><Icon name="reset" />Retry</button>
     {/if}
   </div>
+  <button type="button" class="btn w-8.5 justify-center p-0" data-tip="Options" aria-label="Options" onclick={onoptions}><Icon name="gear" /></button>
 </div>
