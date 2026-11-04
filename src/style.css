@@ -219,7 +219,7 @@ dialog .buttons {
   align-items: center;
   justify-content: center;
   gap: --spacing(1.5);
-  height: --spacing(6.5);
+  height: --spacing(7);
   padding: 0 --spacing(3);
   border: 0;
   border-radius: var(--radius-sm);
