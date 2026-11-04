@@ -221,5 +221,5 @@
 </div>
 
 {#if confirmDelete}
-  <ConfirmDialog title="Delete Mail" message="Delete this mail?" confirmLabel="Delete" onconfirm={remove} oncancel={() => (confirmDelete = false)} />
+  <ConfirmDialog title="Delete Mail" message="Are you sure you want to delete this mail? This action cannot be undone." confirmLabel="Delete" onconfirm={remove} oncancel={() => (confirmDelete = false)} />
 {/if}
