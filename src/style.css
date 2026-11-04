@@ -184,18 +184,37 @@ dialog .buttons {
   opacity: 0.5;
 }
 
-/* Segmented toggle: <div class="seg" role="group"><button aria-pressed="true|false">...</button>...</div> */
+/* Segmented toggle with a sliding selection:
+   <div class="seg" style="--n: 2; --i: <selected index>"><button aria-pressed>...</button>...</div> */
 .seg {
-  display: inline-flex;
+  position: relative;
+  display: inline-grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
   padding: 2px;
   border: 1px solid var(--line2);
   border-radius: 8px;
   background: var(--field);
 }
 
+.seg::before {
+  content: "";
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  left: 2px;
+  width: calc((100% - 4px) / var(--n));
+  border-radius: 6px;
+  background: var(--accent);
+  transform: translateX(calc(100% * var(--i)));
+  transition: transform 0.2s ease;
+}
+
 .seg button {
+  position: relative;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   height: 26px;
   padding: 0 12px;
@@ -205,7 +224,7 @@ dialog .buttons {
   color: var(--muted);
   font: 500 13px system-ui, sans-serif;
   cursor: pointer;
-  transition: background 0.15s, color 0.15s;
+  transition: color 0.2s;
 }
 
 .seg button:hover {
@@ -213,7 +232,6 @@ dialog .buttons {
 }
 
 .seg button[aria-pressed="true"] {
-  background: var(--accent);
   color: #fff;
 }
 

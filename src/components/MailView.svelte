@@ -160,7 +160,7 @@
         </button>
       {/each}
       {#if tab === "html"}
-        <div class="seg ml-auto" role="group" aria-label="Preview width">
+        <div class="seg ml-auto" style:--n="2" style:--i={mobile ? 1 : 0} role="group" aria-label="Preview width">
           <button type="button" aria-pressed={!mobile} onclick={() => (mobile = false)}><Icon name="monitor" />Desktop</button>
           <button type="button" aria-pressed={mobile} onclick={() => (mobile = true)}><Icon name="phone" />Mobile</button>
         </div>
