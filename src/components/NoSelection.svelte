@@ -31,8 +31,7 @@
       <line x1="36" y1="41" x2="84" y2="41" />
       <line x1="36" y1="50" x2="78" y2="50" />
     </g>
-    <path d="M10 46 L60 76 L110 46 V86 A6 6 0 0 1 104 92 H16 A6 6 0 0 1 10 86 Z" fill="url(#ns-front)" stroke="var(--line2)" />
-    <path d="M12 90 L50 68 M108 90 L70 68" stroke="var(--line2)" fill="none" />
+    <path d="M10 46 L60 76 L110 46 V86 A6 6 0 0 1 104 92 H16 A6 6 0 0 1 10 86 Z" fill="url(#ns-front)" stroke="var(--line2)" stroke-linejoin="round" />
   </svg>
   <p class="font-semibold text-text">Select a mail to read it</p>
   <p class="text-muted">No mail selected</p>
