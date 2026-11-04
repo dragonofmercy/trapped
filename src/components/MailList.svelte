@@ -122,7 +122,7 @@
     </label>
     <span class="label">Inbox</span>
     {#if checked.length}
-      <button type="button" class="btn danger ml-auto h-7" onclick={() => (confirmDelete = true)}><Icon name="trash" />Delete selection ({checked.length})</button>
+      <button type="button" class="btn danger ml-auto h-7" onclick={() => (confirmDelete = true)}><Icon name="trash" />Delete ({checked.length})</button>
     {/if}
   </div>
   {#if deleteError || error}<div class="selectable text-danger">{deleteError || error}</div>{/if}
