@@ -59,7 +59,7 @@
     gap: calc(var(--spacing) * 6);
     padding: calc(var(--spacing) * 3.5) 0;
   }
-  .option + .option {
+  .option:not(:first-child) {
     border-top: 1px solid var(--line);
   }
   .text {
