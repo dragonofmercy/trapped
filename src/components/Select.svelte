@@ -102,7 +102,7 @@
     list-style: none;
     background: var(--dialog-bg);
     border: 1px solid var(--line2);
-    border-radius: var(--radius-xl);
+    border-radius: var(--radius-md);
     box-shadow: 0 14px 34px rgba(0, 0, 0, 0.55);
   }
   ul.up {
@@ -117,7 +117,7 @@
     height: calc(var(--spacing) * 8);
     padding: 0 calc(var(--spacing) * 2.5);
     border: 0;
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-sm);
     background: transparent;
     color: var(--text);
     font:
