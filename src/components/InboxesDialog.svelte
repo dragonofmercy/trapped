@@ -65,23 +65,26 @@
     </div>
     {#if error}<p class="error selectable mt-3">{error}</p>{/if}
 
-    <div class="list mt-3 min-h-0 flex-1 overflow-y-auto">
-      {#if !inboxes.length}
-        <p class="py-4 text-center text-muted">No inbox. One is created on the first mail sent with a new username.</p>
-      {:else if !shown.length}
-        <p class="py-4 text-center text-muted">No inbox matches.</p>
-      {/if}
-      {#each shown as i (i.id)}
-        <div class="item">
-          <span class="tile"><Icon name="inbox" /></span>
-          <span class="text">
-            <strong>{i.name}</strong>
-            <span><b>{i.count}</b> {i.count === 1 ? "mail" : "mails"}{#if i.unread}<span class="sep"></span><b>{i.unread}</b> unread{/if}</span>
-          </span>
-          <button type="button" class="btn icon tip-left" data-tip="Rename" aria-label={`Rename ${i.name}`} onclick={() => (naming = { inbox: i, error: "" })}><Icon name="pencil" /></button>
-          <button type="button" class="btn danger icon tip-left" data-tip="Delete" aria-label={`Delete ${i.name}`} onclick={() => (deleting = i)}><Icon name="trash" /></button>
-        </div>
-      {/each}
+    <!-- The scroller overhangs the card by 1px, hidden by overflow: scrolled to the end, the last row's line sits under the card border -->
+    <div class="list mt-3 flex min-h-0 flex-1 flex-col overflow-hidden">
+      <div class="-mb-px min-h-0 flex-1 overflow-y-auto">
+        {#if !inboxes.length}
+          <p class="py-4 text-center text-muted">No inbox. One is created on the first mail sent with a new username.</p>
+        {:else if !shown.length}
+          <p class="py-4 text-center text-muted">No inbox matches.</p>
+        {/if}
+        {#each shown as i (i.id)}
+          <div class="item">
+            <span class="tile"><Icon name="inbox" /></span>
+            <span class="text">
+              <strong>{i.name}</strong>
+              <span><b>{i.count}</b> {i.count === 1 ? "mail" : "mails"}{#if i.unread}<span class="sep"></span><b>{i.unread}</b> unread{/if}</span>
+            </span>
+            <button type="button" class="btn icon tip-left" data-tip="Rename" aria-label={`Rename ${i.name}`} onclick={() => (naming = { inbox: i, error: "" })}><Icon name="pencil" /></button>
+            <button type="button" class="btn danger icon tip-left" data-tip="Delete" aria-label={`Delete ${i.name}`} onclick={() => (deleting = i)}><Icon name="trash" /></button>
+          </div>
+        {/each}
+      </div>
     </div>
   </div>
 </Modal>
@@ -147,10 +150,6 @@
   /* Every row, the last one included: the list keeps its height, so the last row needs a closing line too */
   .item {
     border-bottom: 1px solid var(--line);
-  }
-  /* When the list is full, the last line would double the card border: pull it under the scroll edge */
-  .item:last-child {
-    margin-bottom: -1px;
   }
   .tile {
     display: flex;
