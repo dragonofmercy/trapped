@@ -131,7 +131,7 @@
       {#if query}
         <p class="p-4 text-center text-muted">No mail matches.</p>
       {:else}
-        <div class="flex flex-col items-center gap-2 p-8 text-muted [&_svg]:size-10"><Icon name="inbox" /><p>No email yet.</p></div>
+        <div class="flex flex-col items-center gap-2 p-8 text-muted [&_svg]:size-10"><Icon name="inbox" /><p>No mail yet.</p></div>
       {/if}
     {/if}
     {#each rows as m (m.id)}
