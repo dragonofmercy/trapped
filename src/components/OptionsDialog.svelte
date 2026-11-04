@@ -127,7 +127,7 @@ MAIL_ENCRYPTION=null`);
 <style>
   .option {
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     gap: calc(var(--spacing) * 6);
     padding: calc(var(--spacing) * 3.5) 0;
   }
