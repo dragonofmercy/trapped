@@ -5,26 +5,26 @@
 
   let { onclose }: { onclose: () => void } = $props();
 
-  let port = $state("");
+  // Number input: bind:value gives null while the field is empty
   let error = $state("");
   let saving = $state(false);
   onMount(() => {
     getSmtpPort().then(
-      (p) => (port = String(p)),
+      (p) => (port = p),
       (e) => (error = String(e)),
     );
   });
 
-  const value = $derived(Number(port.trim()));
-  const invalid = $derived(port.trim() !== "" && !(Number.isInteger(value) && value >= 1 && value <= 65535) ? "Port must be a number between 1 and 65535" : null);
+  let port = $state<number | null>(null);
+  const invalid = $derived(port !== null && !(Number.isInteger(port) && port >= 1 && port <= 65535) ? "Port must be a number between 1 and 65535" : null);
 
   async function submit(e: SubmitEvent) {
     e.preventDefault();
-    if (invalid !== null || port.trim() === "") return;
+    if (invalid !== null || port === null) return;
     saving = true;
     error = "";
     try {
-      await setSmtpPort(value);
+      await setSmtpPort(port);
       onclose();
     } catch (err) {
       error = String(err);
@@ -41,13 +41,13 @@
       <label class="option">
         <span class="text"><strong>SMTP port</strong><span>Port Trapped listens on, on 127.0.0.1 only. Default 2525.</span></span>
         <!-- svelte-ignore a11y_autofocus -->
-        <input class="field w-28 text-right" inputmode="numeric" bind:value={port} autofocus oninput={() => (error = "")} />
+        <input class="field w-28 text-right" type="number" min="1" max="65535" autocomplete="off" bind:value={port} autofocus oninput={() => (error = "")} />
       </label>
       {#if invalid || error}<p class="error selectable">{invalid || error}</p>{/if}
     </div>
     <div class="buttons">
       <button type="button" class="btn ghost" onclick={onclose}>Cancel</button>
-      <button type="submit" class="btn" disabled={saving || invalid !== null || port.trim() === ""}>Save</button>
+      <button type="submit" class="btn" disabled={saving || invalid !== null || port === null}>Save</button>
     </div>
   </form>
 </Modal>
@@ -73,6 +73,15 @@
   }
   .text span {
     color: var(--muted);
+  }
+  /* No spin buttons on the number field */
+  input::-webkit-inner-spin-button,
+  input::-webkit-outer-spin-button {
+    appearance: none;
+    margin: 0;
+  }
+  input {
+    appearance: textfield;
   }
   .error {
     margin: 0;
