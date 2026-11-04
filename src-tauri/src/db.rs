@@ -160,7 +160,7 @@ impl Db {
     }
 
     pub fn get_mail(&self, id: i64) -> rusqlite::Result<StoredMail> {
-        self.conn.execute("UPDATE mails SET is_read = 1 WHERE id = ?1", [id])?;
+        self.conn.execute("UPDATE mails SET is_read = 1 WHERE id = ?1 AND is_read = 0", [id])?;
         self.conn.query_row(
             "SELECT m.id, m.inbox_id, m.subject, m.from_addr, m.to_json, m.cc_json, m.bcc_json, m.received_at, r.raw FROM mails m JOIN raws r ON r.mail_id = m.id WHERE m.id = ?1",
             [id],
@@ -186,10 +186,6 @@ impl Db {
             tx.execute("DELETE FROM mails WHERE id = ?1", [id])?;
         }
         tx.commit()
-    }
-
-    pub fn empty_inbox(&self, inbox_id: i64) -> rusqlite::Result<()> {
-        self.conn.execute("DELETE FROM mails WHERE inbox_id = ?1", [inbox_id]).map(|_| ())
     }
 
     pub fn rename_inbox(&self, inbox_id: i64, name: &str) -> Result<(), String> {
@@ -317,14 +313,14 @@ mod tests {
     }
 
     #[test]
-    fn delete_and_empty() {
+    fn delete_mails_removes_raws() {
         let db = Db::open_in_memory().unwrap();
         let inbox = db.inbox_id("").unwrap();
         let a = db.insert_mail(inbox, &sum("a", "a"), b"r", 1).unwrap();
         let b = db.insert_mail(inbox, &sum("b", "b"), b"r", 2).unwrap();
         db.delete_mails(&[a]).unwrap();
         assert_eq!(db.list_mails(inbox, "").unwrap().iter().map(|m| m.id).collect::<Vec<_>>(), vec![b]);
-        db.empty_inbox(inbox).unwrap();
+        db.delete_mails(&[b]).unwrap();
         assert!(db.list_mails(inbox, "").unwrap().is_empty());
         let n: i64 = db.conn.query_row("SELECT COUNT(*) FROM raws", [], |r| r.get(0)).unwrap();
         assert_eq!(n, 0);

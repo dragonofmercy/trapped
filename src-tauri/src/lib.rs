@@ -27,7 +27,7 @@ fn show_main(app: &AppHandle) {
 fn store(app: &AppHandle, r: smtp::Received) {
     let summary = parse::summarize(&r.raw, &r.rcpt_to);
     let db = app.state::<DbState>();
-    let db = db.lock().unwrap_or_else(|p| p.into_inner());
+    let db = commands::lock(&db);
     let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_or(0, |d| d.as_secs() as i64);
     match db.inbox_id(&r.inbox).and_then(|id| db.insert_mail(id, &summary, &r.raw, now).map(|_| id)) {
         Ok(inbox_id) => {
@@ -100,7 +100,6 @@ pub fn run() {
             commands::get_mail,
             commands::get_raw,
             commands::delete_mails,
-            commands::empty_inbox,
             commands::rename_inbox,
             commands::create_inbox,
             commands::get_smtp_port,
