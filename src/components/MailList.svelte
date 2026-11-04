@@ -153,5 +153,5 @@
 </div>
 
 {#if confirmDelete}
-  <ConfirmDialog title="Delete Mails" message={`Are you sure you want to delete the ${checked.length === 1 ? "selected mail" : `${checked.length} selected mails`}? This action cannot be undone.`} confirmLabel="Delete" onconfirm={remove} oncancel={() => (confirmDelete = false)} />
+  <ConfirmDialog title="Delete Mails" message={`Are you sure you want to delete the ${checked.length === 1 ? "selected mail" : `${checked.length} selected mails`}?`} confirmLabel="Delete" onconfirm={remove} oncancel={() => (confirmDelete = false)} />
 {/if}

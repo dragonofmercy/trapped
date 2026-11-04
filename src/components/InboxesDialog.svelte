@@ -101,7 +101,7 @@
 {#if deleting}
   <ConfirmDialog
     title="Delete Inbox"
-    message={`Are you sure you want to delete the inbox "${deleting.name}"? Its ${deleting.count} ${deleting.count === 1 ? "mail" : "mails"} will be deleted as well. This action cannot be undone.`}
+    message={`Are you sure you want to delete the inbox "${deleting.name}"? Its ${deleting.count} ${deleting.count === 1 ? "mail" : "mails"} will be deleted as well.`}
     confirmLabel="Delete"
     onconfirm={confirmDelete}
     oncancel={() => (deleting = null)}
