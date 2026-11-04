@@ -55,6 +55,7 @@ pub struct MailDetail {
     pub text: Option<String>,
     pub headers: Vec<(String, String)>,
     pub attachments: Vec<AttachmentInfo>,
+    pub was_unread: bool,
 }
 
 #[derive(Serialize, Clone)]
@@ -169,15 +170,16 @@ pub async fn get_mail(app: AppHandle, id: i64) -> Result<MailDetail, String> {
         html: d.html,
         text: d.text,
         headers: d.headers,
+        was_unread: m.was_unread,
         attachments: d
             .attachments
-            .iter()
+            .into_iter()
             .map(|a| AttachmentInfo {
-                index: a.index,
-                name: a.name.clone(),
-                mime: a.mime.clone(),
-                size: a.data.len(),
                 blocked: is_blocked_extension(&a.name),
+                index: a.index,
+                name: a.name,
+                mime: a.mime,
+                size: a.size,
             })
             .collect(),
     })
@@ -264,7 +266,7 @@ pub async fn set_smtp_port(app: AppHandle, port: NonZeroU16) -> Result<SmtpStatu
 
 fn attachment_data(app: &AppHandle, mail_id: i64, index: usize) -> Result<parse::Attachment, String> {
     let m = lock(&app.state::<DbState>()).get_raw(mail_id).map_err(e)?;
-    parse::detail(&m).attachments.into_iter().find(|a| a.index == index).ok_or_else(|| "Attachment not found".to_string())
+    parse::attachment(&m, index).ok_or_else(|| "Attachment not found".to_string())
 }
 
 #[tauri::command]

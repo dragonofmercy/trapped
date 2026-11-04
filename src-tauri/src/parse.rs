@@ -11,12 +11,20 @@ pub struct Summary {
     pub search_text: String,
 }
 
+/// Decoded part: inline cid images and the one attachment being opened or saved
 pub struct Attachment {
-    pub index: usize,
     pub name: String,
     pub mime: String,
     pub content_id: Option<String>,
     pub data: Vec<u8>,
+}
+
+/// What the mail view lists, without copying the attachment bytes
+pub struct AttachmentMeta {
+    pub index: usize,
+    pub name: String,
+    pub mime: String,
+    pub size: usize,
 }
 
 pub struct Detail {
@@ -24,7 +32,7 @@ pub struct Detail {
     pub html: Option<String>,
     pub text: Option<String>,
     pub headers: Vec<(String, String)>,
-    pub attachments: Vec<Attachment>,
+    pub attachments: Vec<AttachmentMeta>,
 }
 
 fn emails(addr: Option<AddressList>) -> Vec<String> {
@@ -54,11 +62,18 @@ fn is_listed(part: &MessagePart) -> bool {
     part.attachment_name().is_some() && part.content_id().is_none()
 }
 
+fn name(part: &MessagePart) -> String {
+    part.attachment_name().unwrap_or("attachment").to_string()
+}
+
+fn mime(part: &MessagePart) -> String {
+    part.content_type().map(|c| format!("{}/{}", c.ctype(), c.subtype().unwrap_or("octet-stream"))).unwrap_or_else(|| "application/octet-stream".to_string())
+}
+
 fn to_attachment(part: &MessagePart) -> Attachment {
     Attachment {
-        index: 0,
-        name: part.attachment_name().unwrap_or("attachment").to_string(),
-        mime: part.content_type().map(|c| format!("{}/{}", c.ctype(), c.subtype().unwrap_or("octet-stream"))).unwrap_or_else(|| "application/octet-stream".to_string()),
+        name: name(part),
+        mime: mime(part),
         content_id: part.content_id().map(|c| c.trim_matches(|ch| ch == '<' || ch == '>').to_string()),
         data: part.decoded().into_owned(),
     }
@@ -112,8 +127,23 @@ pub fn detail(raw: &[u8]) -> Detail {
         html,
         text: text_body(&msg),
         headers: msg.headers().iter().map(|h| (h.raw_name().to_string(), String::from_utf8_lossy(h.raw_value()).trim().to_string())).collect(),
-        attachments: msg.attachments().filter(is_listed).enumerate().map(|(i, p)| Attachment { index: i, ..to_attachment(&p) }).collect(),
+        attachments: msg
+            .attachments()
+            .filter(is_listed)
+            .enumerate()
+            .map(|(index, p)| AttachmentMeta {
+                index,
+                name: name(&p),
+                mime: mime(&p),
+                size: p.decoded().len(),
+            })
+            .collect(),
     }
+}
+
+/// The listed attachment at `index` (same numbering as `Detail::attachments`), decoded alone
+pub fn attachment(raw: &[u8], index: usize) -> Option<Attachment> {
+    MessageParser::default().parse(raw)?.attachments().filter(is_listed).nth(index).map(|p| to_attachment(&p))
 }
 
 pub fn strip_html(html: &str) -> String {
@@ -238,6 +268,9 @@ mod tests {
         assert_eq!(d.attachments.len(), 1);
         assert_eq!(d.attachments[0].name, "invoice.pdf");
         assert_eq!(d.attachments[0].mime, "application/pdf");
+        let a = attachment(WITH_PDF, 0).unwrap();
+        assert_eq!((a.name.as_str(), a.data.len()), ("invoice.pdf", d.attachments[0].size));
+        assert!(attachment(WITH_PDF, 1).is_none());
         assert!(summarize(WITH_PDF, &[]).has_attachments);
     }
 

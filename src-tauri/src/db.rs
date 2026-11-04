@@ -39,6 +39,8 @@ pub struct StoredMail {
     pub bcc: Vec<String>,
     pub received_at: i64,
     pub raw: Vec<u8>,
+    /// This read marked the mail as read (the inbox unread count changed)
+    pub was_unread: bool,
 }
 
 pub struct Db {
@@ -160,7 +162,7 @@ impl Db {
     }
 
     pub fn get_mail(&self, id: i64) -> rusqlite::Result<StoredMail> {
-        self.conn.execute("UPDATE mails SET is_read = 1 WHERE id = ?1 AND is_read = 0", [id])?;
+        let was_unread = self.conn.execute("UPDATE mails SET is_read = 1 WHERE id = ?1 AND is_read = 0", [id])? > 0;
         self.conn.query_row(
             "SELECT m.id, m.inbox_id, m.subject, m.from_addr, m.to_json, m.cc_json, m.bcc_json, m.received_at, r.raw FROM mails m JOIN raws r ON r.mail_id = m.id WHERE m.id = ?1",
             [id],
@@ -175,6 +177,7 @@ impl Db {
                     bcc: json_list(r.get(6)?),
                     received_at: r.get(7)?,
                     raw: r.get(8)?,
+                    was_unread,
                 })
             },
         )
