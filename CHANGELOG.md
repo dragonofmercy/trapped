@@ -4,10 +4,11 @@ All notable changes to Trapped are listed here. The format follows [Keep a Chang
 
 ## [Unreleased]
 
-- SMTP mail catcher on `127.0.0.1:2525`, never relays
+- Catches every mail your apps send to `127.0.0.1:2525`, nothing is ever delivered
 - One inbox per SMTP username, created on its first mail
-- HTML (desktop or mobile width), text, source, headers and attachments views
-- Search, bulk delete and unread counts
-- Configurable SMTP port and listen address (`127.0.0.1` or `0.0.0.0`)
-- Tray icon, closing the window keeps Trapped running
+- See each mail as HTML (desktop or mobile width), text, source and headers
+- Open or save attachments
+- Search mails, delete several at once, unread counts per inbox
+- Change the port, and accept mail from other machines on your network
+- Keeps running in the tray when you close the window
 - Automatic updates
