@@ -196,7 +196,7 @@ dialog .buttons {
   grid-auto-columns: 1fr;
   padding: --spacing(0.5);
   border: 1px solid var(--line2);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   background: var(--field);
 }
 
@@ -207,7 +207,7 @@ dialog .buttons {
   bottom: --spacing(0.5);
   left: --spacing(0.5);
   width: calc((100% - --spacing(1)) / var(--n));
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
   background: var(--accent);
   transform: translateX(calc(100% * var(--i)));
   transition: transform 0.2s ease;
@@ -222,7 +222,7 @@ dialog .buttons {
   height: --spacing(6.5);
   padding: 0 --spacing(3);
   border: 0;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
   background: transparent;
   color: var(--muted);
   font: 500 var(--text-sm) system-ui, sans-serif;
@@ -321,7 +321,7 @@ dialog .buttons {
     gap: --spacing(2);
     height: --spacing(8.5);
     padding: 0 --spacing(3.5);
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius-md);
     border: 1px solid var(--line2);
     background: var(--btn-bg);
     color: var(--text);
@@ -385,7 +385,7 @@ dialog .buttons {
   .field {
     height: --spacing(8.5);
     padding: 0 --spacing(3);
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius-md);
     border: 1px solid var(--line);
     background: var(--field);
     color: var(--text);
