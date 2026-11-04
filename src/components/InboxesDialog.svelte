@@ -73,7 +73,7 @@
       {/if}
       {#each shown as i (i.id)}
         <div class="item">
-          <span class="tile"><Icon name="inbox" size={16} /></span>
+          <span class="tile"><Icon name="inbox" /></span>
           <span class="text">
             <strong>{i.name}</strong>
             <span><b>{i.count}</b> {i.count === 1 ? "mail" : "mails"}{#if i.unread}<span class="sep"></span><b>{i.unread}</b> unread{/if}</span>

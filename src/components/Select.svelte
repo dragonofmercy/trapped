@@ -32,7 +32,7 @@
     {@render icon?.(value)}
     <span class="text">{current?.label ?? ""}</span>
     {#if current?.badge !== undefined}<span class="badge">{current.badge}</span>{/if}
-    <span class="caret" class:open><Icon name="chevron" size={14} /></span>
+    <span class="caret" class:open><Icon name="chevron" /></span>
   </button>
   {#if open}
     <ul role="listbox" class:up>
