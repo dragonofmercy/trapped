@@ -61,7 +61,7 @@
         <Icon name="search" />
         <input type="search" bind:value={query} placeholder="Search inboxes..." aria-label="Search inboxes" />
       </label>
-      <button type="button" class="btn primary" onclick={() => (naming = { inbox: null, error: "" })}><Icon name="plus" />New</button>
+      <button type="button" class="btn" onclick={() => (naming = { inbox: null, error: "" })}><Icon name="plus" />New</button>
     </div>
     {#if error}<p class="error selectable">{error}</p>{/if}
 
